@@ -1,13 +1,6 @@
 from tkinter import filedialog
-from brace_check import *
-
-var_types = ['bool', 'char', 'int', 'float', 'double', 'string']
-key_words = ['#include', '<iostream>', '<math.h>', 'using', 'namespace',
-             'std', 'for', 'while', 'do', 'continue', 'break',
-             'if', 'else', 'switch', 'case', 'return',
-             'cin', 'cout', 'endl', 'default']
-operators = ['+', '-', '*', '/', '%', '=', '==', '+=', '<<', '>>', '<', '>', '&&', '||', '&', '|']
-functions = ['main', 'factorial', 'pow', 'abs']
+from functions import *
+from constants import *
 
 
 def get_file():
@@ -19,33 +12,6 @@ def get_file():
         data = f.read()
 
     return data
-
-
-def is_int(number_str):
-    if not number_str:
-        return False
-    if not (number_str.isdigit() or (number_str[0] == '-' and number_str[1:].isdigit())):
-        return False
-    number = int(number_str)
-    return number_str == str(number)
-
-
-def is_float(number_str):
-    if not number_str:
-        return False
-    try:
-        float(number_str)
-    except ValueError:
-        return False
-    return not (is_int(number_str) or (number_str[0] == '-' and is_int(number_str[1:])))
-
-
-def whitespaces():
-    print(29 * '-')
-
-
-def whitespace_check(symbol):
-    return symbol == ' ' or symbol == '\t' or symbol == ';'
 
 
 def main():
@@ -95,22 +61,16 @@ def main():
                     prev_var_type = current
                     if prev_is_operator:
                         prev_is_operator = False
-                        errors.append(f'{row}, {column} Lexical error, unexpected {current} after operator:\n'
-                                      f'{row}: {lines[row]}\n'
-                                      f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                        errors.append(operator_error(current, lines[row], row, column))
                 elif current in key_words:
                     key_word_tokens.append(current)
                     if prev_is_operator and current != 'endl':
                         prev_is_operator = False
-                        errors.append(f'{row}, {column} Lexical error, unexpected {current} after operator:\n'
-                                      f'{row}: {lines[row]}\n'
-                                      f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                        errors.append(operator_error(current, lines[row], row, column))
                 elif current in operators:
                     operator_tokens.append(current)
                     if prev_is_operator:
-                        errors.append(f'{row}, {column} Lexical error, unexpected {current} after operator:\n'
-                                      f'{row}: {lines[row]}\n'
-                                      f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                        errors.append(operator_error(current, lines[row], row, column))
                     prev_is_operator = True
                 elif is_int(current):
                     integer_tokens.append(current)
@@ -128,17 +88,12 @@ def main():
                         if current[0] == '_' or current[0].isalpha():
                             var_tokens[current] = prev_var_type
                         else:
-                            errors.append(
-                                f'{row}, {column} Lexical error, var name should start with letter or _:\n'
-                                f'{row}: {lines[row]}\n'
-                                f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                            errors.append(var_name_error(lines[row], row, column))
 
                         if column > len(lines[row]) - 1 and lines[row][column + 1:].strip()[0] != ',':
                             prev_var_type = ''
                     elif current != ':':
-                        errors.append(f'{row}, {column} Lexical error, unexpected {current}:\n'
-                                      f'{row}: {lines[row]}\n'
-                                      f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                        errors.append(lexical_error(current, lines[row], row, column))
                 current = ''
             else:
                 current += s

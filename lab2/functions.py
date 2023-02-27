@@ -1,3 +1,5 @@
+import math
+
 from constants import var_types, key_words, functions
 
 brackets = {
@@ -50,7 +52,7 @@ def is_float(number_str):
 
 
 def whitespaces():
-    print(29 * '-')
+    print(30 * '-')
 
 
 def whitespace_check(symbol):
@@ -78,3 +80,11 @@ def lexical_error(current: str, line, row, column):
     return (f'{row}, {column} Lexical error, unexpected "{current}"{mean if mean != "" else ""}:\n'
             f'{row}: {line}\n'
             f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+
+
+def token_output(name: str, token_collection):
+    length = 30 - len(name)
+    print('-' * math.floor(length / 2) + name.upper() + '-' * math.ceil(length / 2))
+    for token in token_collection:
+        print(token)
+    whitespaces()

@@ -98,39 +98,14 @@ def main():
             else:
                 current += s
 
-    print('-' * 10 + 'VARIABLES' + '-' * 10)
-    for key in var_tokens.keys():
-        print(f'{key}: {var_tokens[key]}')
-    whitespaces()
-    print('-' * 10 + 'INTEGERS' + '-' * 11)
-    for token in integer_tokens:
-        print(token)
-    whitespaces()
-    print('-' * 11 + 'FLOATS' + '-' * 12)
-    for token in float_tokens:
-        print(token)
-    whitespaces()
-    print('-' * 11 + 'STRINGS' + '-' * 11)
-    for token in string_tokens:
-        print(token)
-    whitespaces()
-    print('-' * 7 + 'VARIABLE TYPES' + '-' * 8)
-    for token in var_types_tokens:
-        print(token)
-    whitespaces()
-    print('-' * 10 + 'KEY WORDS' + '-' * 10)
-    for token in key_word_tokens:
-        print(token)
-    whitespaces()
-    print('-' * 10 + 'OPERATORS' + '-' * 10)
-    for token in operator_tokens:
-        print(token)
-    whitespaces()
-
-    print('-' * 11 + 'ERRORS' + '-' * 12)
-    for error in errors:
-        print(error)
-    whitespaces()
+    token_output('VARIABLES', var_tokens)
+    token_output('INTEGERS', integer_tokens)
+    token_output('FLOATS', float_tokens)
+    token_output('STRINGS', string_tokens)
+    token_output('VARIABLE TYPES', set(var_types_tokens))
+    token_output('KEY WORDS', set(key_word_tokens))
+    token_output('OPERATORS', set(operator_tokens))
+    token_output('ERRORS', errors)
 
 
 if __name__ == '__main__':

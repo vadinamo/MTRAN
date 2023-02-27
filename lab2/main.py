@@ -5,7 +5,7 @@ var_types = ['bool', 'char', 'int', 'float', 'double', 'string']
 key_words = ['#include', '<iostream>', '<math.h>', 'using', 'namespace',
              'std', 'for', 'while', 'do', 'continue', 'break',
              'if', 'else', 'switch', 'case', 'return',
-             'cin', 'cout']
+             'cin', 'cout', 'endl', 'default']
 operators = ['+', '-', '*', '/', '%', '=', '==', '+=', '<<', '>>', '<', '>', '&&', '||', '&', '|']
 functions = ['main', 'factorial', 'pow', 'abs']
 
@@ -75,7 +75,7 @@ def main():
             if column == len(lines[row]) - 1 and not (
                     whitespace_check(s)
                     or s in brackets.keys() or s in brackets.values()
-                    or s == ',' or s == '"'):
+                    or s == ',' or s == '"' or s == ":"):
                 current += s
 
             if string_started or s == '"':
@@ -84,12 +84,12 @@ def main():
                     if not string_started:
                         string_started = True
                     else:
+                        prev_is_operator = False
                         string_started = False
                         string_tokens.append(current)
                         current = ''
-            elif whitespace_check(s) or \
-                    s in brackets.keys() or s in brackets.values() or \
-                    s == ',' or column == len(lines[row]) - 1:
+            elif whitespace_check(s) or s in brackets.keys() or s in brackets.values() or s == ',' or column == len(
+                    lines[row]) - 1:
                 if current in var_types:
                     var_types_tokens.append(current)
                     prev_var_type = current
@@ -100,7 +100,7 @@ def main():
                                       f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                 elif current in key_words:
                     key_word_tokens.append(current)
-                    if prev_is_operator:
+                    if prev_is_operator and current != 'endl':
                         prev_is_operator = False
                         errors.append(f'{row}, {column} Lexical error, unexpected {current} after operator:\n'
                                       f'{row}: {lines[row]}\n'
@@ -132,8 +132,10 @@ def main():
                                 f'{row}, {column} Lexical error, var name should start with letter or _:\n'
                                 f'{row}: {lines[row]}\n'
                                 f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
-                        prev_var_type = ''
-                    else:
+
+                        if column > len(lines[row]) - 1 and lines[row][column + 1:].strip()[0] != ',':
+                            prev_var_type = ''
+                    elif current != ':':
                         errors.append(f'{row}, {column} Lexical error, unexpected {current}:\n'
                                       f'{row}: {lines[row]}\n'
                                       f'{" " * (len((row + 1).__str__()) + 1 + column)}^')

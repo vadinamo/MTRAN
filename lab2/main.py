@@ -27,9 +27,6 @@ def main():
     operator_tokens = []
 
     errors = []
-    result = bracket_check(lines)
-    if result:
-        errors.append(result)
 
     for row in range(len(lines)):
         current = ''
@@ -98,13 +95,17 @@ def main():
             else:
                 current += s
 
-    token_output('VARIABLES', var_tokens)
-    token_output('INTEGERS', integer_tokens)
-    token_output('FLOATS', float_tokens)
-    token_output('STRINGS', string_tokens)
-    token_output('VARIABLE TYPES', set(var_types_tokens))
+    result = bracket_check(lines)
+    if result:
+        errors.append(result)
+
     token_output('KEY WORDS', set(key_word_tokens))
+    token_output('INTEGER CONSTANTS', integer_tokens)
+    token_output('FLOAT CONSTANTS', float_tokens)
+    token_output('STRING CONSTANTS', string_tokens)
     token_output('OPERATORS', set(operator_tokens))
+    token_output('VARIABLE TYPES', set(var_types_tokens))
+    token_output('VARIABLES', var_tokens)
     token_output('ERRORS', errors)
 
 

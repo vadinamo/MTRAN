@@ -3,5 +3,6 @@ key_words = ['#include', '<iostream>', 'using', 'namespace', 'std', 'for',
              'while', 'do', 'continue', 'break', 'if', 'else', 'switch',
              'case', 'return', 'cin', 'cout', 'endl', 'default', 'new',
              'true', 'false']
-operators = ['+', '-', '*', '/', '%', '=', '==', '+=', '<<', '>>', '<', '>', '&&', '||', '&', '|']
+operators = ['+', '-', '*', '/', '%', '=',  '<', '>', '&', '|', '!']
+possible_operators = ['==', '!=', '+=', '-=', '*=', '/=', '<<', '>>', '&&', '||']
 separators = [';', '{', '}', '(', ')', '[', ']', ',', ':']

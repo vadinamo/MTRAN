@@ -54,6 +54,16 @@ def get_tokens(path):
                     if s in separators:
                         tokens.append(Token(s, 'SEPARATOR'))
                         current = ''
+                    elif s in operators and not ((s == '<' or s == '>') and tokens[-1].word == '#include'):
+                        temp = s
+                        if len(tokens) > 0 and tokens[-1].word in operators + possible_operators:
+                            temp = tokens[-1].word + s
+                            if temp not in possible_operators:
+                                raise Exception('jopa')
+                            tokens.pop()
+
+                        tokens.append(Token(temp, 'OPERATOR'))
+                        current = ''
             else:
                 current += s
 

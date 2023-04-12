@@ -48,6 +48,23 @@ def get_tokens(path):
                 constants[current] = 'CHAR CONSTANT'
                 tokens.append(Token(current, 'CHAR CONSTANT'))
                 current = ''
+            elif is_valid_variable_name(current):
+                var_type = ''
+                for token in reversed(tokens):
+                    if token.word != ',' and token.word in separators:  # not find
+                        break
+                    elif token.word in var_types:  # find a var type
+                        var_type = token.word
+                        break
+
+                if len(var_type) > 0 and current in var_tokens.keys():
+                    raise Exception('redefinition')
+                else:
+                    if current not in var_tokens.keys():
+                        var_tokens[current] = var_type
+                    tokens.append(Token(current, 'VARIABLE'))
+                    current = ''
+
 
             if not char_read and not string_read:
                 if not is_control_character(s) and s != ' ':

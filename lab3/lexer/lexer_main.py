@@ -10,10 +10,10 @@ def get_tokens(path):
     constants = {}
     var_types_tokens = []
     key_word_tokens = []
-    operator_tokens = []
 
     tokens = []
 
+    space = False
     current = ''
     string_read = False
     char_read = False
@@ -48,6 +48,16 @@ def get_tokens(path):
                 constants[current] = 'CHAR CONSTANT'
                 tokens.append(Token(current, 'CHAR CONSTANT'))
                 current = ''
+            elif is_int(current):
+                if not space and len(tokens) > 0 and (tokens[-1].word == '+' or tokens[-1].word == '-'):
+                    current = tokens[-1].word + current
+                tokens[-1] = Token(current, 'INT CONSTANT')
+                current = ''
+            elif is_float(current):
+                if not space and len(tokens) > 0 and (tokens[-1].word == '+' or tokens[-1].word == '-'):
+                    current = tokens[-1].word + current
+                tokens[-1] = Token(current, 'FLOAT CONSTANT')
+                current = ''
             elif is_valid_variable_name(current):
                 var_type = ''
                 for token in reversed(tokens):
@@ -71,9 +81,9 @@ def get_tokens(path):
                     if s in separators:
                         tokens.append(Token(s, 'SEPARATOR'))
                         current = ''
-                    elif s in operators and not ((s == '<' or s == '>') and tokens[-1].word == '#include'):
+                    elif space and s in operators and not ((s == '<' or s == '>') and tokens[-1].word == '#include'):
                         temp = s
-                        if len(tokens) > 0 and tokens[-1].word in operators + possible_operators:
+                        if not space and len(tokens) > 0 and tokens[-1].word in operators + possible_operators:
                             temp = tokens[-1].word + s
                             if temp not in possible_operators:
                                 raise Exception('jopa')
@@ -81,6 +91,9 @@ def get_tokens(path):
 
                         tokens.append(Token(temp, 'OPERATOR'))
                         current = ''
+                    space = False
+                else:
+                    space = True
             else:
                 current += s
 

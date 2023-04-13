@@ -143,7 +143,7 @@ class Lexer:
                                 temp = self.tokens[-1].word + s
                                 if temp not in possible_operators:
                                     raise Exception(
-                                        f'\n[{row}, {column}] LexicalError, invalid operator "{current}":\n'
+                                        f'\n[{row}, {column}] LexicalError, invalid operator "{temp}":\n'
                                         f'[{row}]: {self.__get_line(code, row)}\n'
                                         f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                                 self.tokens.pop()

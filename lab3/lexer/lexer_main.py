@@ -2,17 +2,56 @@ from lexer.functions import *
 from entities.constants import *
 from entities.token import Token
 
+
 class Lexer:
     def __init__(self):
         self.var_tokens = {}
+        self.func_tokens = {}
         self.constants = {}
         self.var_types_tokens = []
         self.key_word_tokens = []
 
         self.tokens = []
 
+    @staticmethod
+    def get_file(path):
+        with open(path, 'r') as f:
+            data = f.read()
+
+        return data
+
+    @staticmethod
+    def is_control_character(symbol):
+        return symbol == '\t' or symbol == '\n'
+
+    @staticmethod
+    def is_valid_variable_name(name):
+        pattern = r'^[a-zA-Z_][a-zA-Z0-9_]*$'
+        return bool(re.match(pattern, name))
+
+    @staticmethod
+    def is_int(number_str):
+        if not number_str:
+            return False
+        if not (number_str.isdigit() or (number_str[0] == '-' and number_str[1:].isdigit())):
+            return False
+        number = int(number_str)
+        return number_str == str(number)
+
+    def is_float(self, number_str):
+        if not number_str:
+            return False
+        try:
+            float(number_str)
+        except ValueError:
+            return False
+        return not (self.is_int(number_str) or (number_str[0] == '-' and self.is_int(number_str[1:])))
+
+    def is_signed(self, space):
+        return not space and len(self.tokens) > 0 and (self.tokens[-1].word == '+' or self.tokens[-1].word == '-')
+
     def get_tokens(self, path):
-        code = get_file(path)
+        code = self.get_file(path)
 
         space = False
         current = ''
@@ -21,7 +60,7 @@ class Lexer:
 
         row, column = 1, 1
         for s in code:
-            if not is_control_character(s) and s not in separators and s not in operators and (
+            if not self.is_control_character(s) and s not in separators and s not in operators and (
                     s != ' ' or string_read or char_read):
                 if s == '"' and not char_read:
                     string_read = not string_read
@@ -49,19 +88,19 @@ class Lexer:
                     self.constants[current] = 'CHAR CONSTANT'
                     self.tokens.append(Token(current, 'CHAR CONSTANT'))
                     current = ''
-                elif is_int(current):
-                    if not space and len(self.tokens) > 0 and (self.tokens[-1].word == '+' or self.tokens[-1].word == '-'):
+                elif self.is_int(current):
+                    if self.is_signed(space):
                         current = self.tokens[-1].word + current
                         self.tokens.pop()
                     self.tokens.append(Token(current, 'INT CONSTANT'))
                     current = ''
-                elif is_float(current):
-                    if not space and len(self.tokens) > 0 and (self.tokens[-1].word == '+' or self.tokens[-1].word == '-'):
+                elif self.is_float(current):
+                    if self.is_signed(space):
                         current = self.tokens[-1].word + current
                         self.tokens.pop()
                     self.tokens.append(Token(current, 'FLOAT CONSTANT'))
                     current = ''
-                elif is_valid_variable_name(current):
+                elif self.is_valid_variable_name(current):
                     var_type = ''
                     for token in reversed(self.tokens):
                         if token.word != ',' and token.word in separators:  # not find
@@ -70,31 +109,40 @@ class Lexer:
                             var_type = token.word
                             break
 
-                    if len(var_type) > 0 and current in self.var_tokens.keys():
+                    if len(var_type) > 0 and (current in self.var_tokens.keys() or current in self.func_tokens.keys()):
                         raise Exception('redefinition')
                     else:
                         if current not in self.var_tokens.keys():
+                            if len(var_type) == 0:
+                                raise Exception('jopa')
                             self.var_tokens[current] = var_type
                         self.tokens.append(Token(current, 'VARIABLE'))
                         current = ''
 
-
                 if not char_read and not string_read:
-                    if not is_control_character(s) and s != ' ':
+                    if not self.is_control_character(s) and s != ' ':
                         if s in separators:
+                            if s == '(' and len(self.tokens) > 0 and self.tokens[-1].word in self.var_tokens.keys():
+                                self.tokens[-1].token_type = 'FUNCTION'
+                                self.func_tokens[self.tokens[-1].word] = self.var_tokens[self.tokens[-1].word]
+                                del self.var_tokens[self.tokens[-1].word]
                             self.tokens.append(Token(s, 'SEPARATOR'))
                             current = ''
                         elif s in operators and not ((s == '<' or s == '>') and self.tokens[-1].word == '#include'):
                             temp = s
-                            if not space and len(self.tokens) > 0 and self.tokens[-1].word in operators + possible_operators:
+                            if not space and len(self.tokens) > 0 and self.tokens[
+                                -1].word in operators + possible_operators:
                                 temp = self.tokens[-1].word + s
                                 if temp not in possible_operators:
                                     raise Exception('jopa')
                                 self.tokens.pop()
                             self.tokens.append(Token(temp, 'OPERATOR'))
                             current = ''
+
                         space = False
                     else:
+                        if len(current.replace(" ", "").replace("\t", "").replace("\n", "")) > 0:
+                            raise Exception('jopa')
                         space = True
                 else:
                     current += s
@@ -104,4 +152,5 @@ class Lexer:
                 column = 1
             else:
                 column += 1
+
         return self.tokens

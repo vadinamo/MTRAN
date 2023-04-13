@@ -3,7 +3,7 @@ from nodes.node import Node
 
 
 class BinaryOperationNode(Node):
-    def __init__(self, operation: Token, first_element: Node, second_element: Node):
+    def __init__(self, operation: Token, left_node: Node, right_node: Node):
         self.operation = operation
-        self.first_element = first_element
-        self.second_element = second_element
+        self.left_node = left_node
+        self.right_node = right_node

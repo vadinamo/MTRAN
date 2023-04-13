@@ -1,5 +1,6 @@
 from entities.constants import *
 from entities.token import Token
+import re
 
 
 class Lexer:

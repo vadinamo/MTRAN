@@ -3,6 +3,6 @@ from nodes.node import Node
 
 
 class UnaryOperationNode(Node):
-    def __init__(self, operation: Token, element: Node):
+    def __init__(self, operation: Token, node: Node):
         self.operation = operation
-        self.element = element
+        self.node = node

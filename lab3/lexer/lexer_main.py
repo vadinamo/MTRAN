@@ -50,6 +50,10 @@ class Lexer:
     def is_signed(self, space):
         return not space and len(self.tokens) > 0 and (self.tokens[-1].word == '+' or self.tokens[-1].word == '-')
 
+    @staticmethod
+    def __get_line(code, row):
+        return code.split('\n')[row - 1]
+
     def get_tokens(self, path):
         code = self.get_file(path)
 
@@ -110,11 +114,16 @@ class Lexer:
                             break
 
                     if len(var_type) > 0 and (current in self.var_tokens.keys() or current in self.func_tokens.keys()):
-                        raise Exception('redefinition')
+                        raise Exception(f'\n[{row}, {column}] LexicalError, redefinition of name "{current}":\n'
+                                        f'[{row}]: {self.__get_line(code, row)}\n'
+                                        f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                     else:
                         if current not in self.var_tokens.keys():
                             if len(var_type) == 0:
-                                raise Exception('jopa')
+                                raise Exception(
+                                    f'\n[{row}, {column}] LexicalError, unexpected "{current}":\n'
+                                    f'[{row}]: {self.__get_line(code, row)}\n'
+                                    f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                             self.var_tokens[current] = var_type
                         self.tokens.append(Token(current, 'VARIABLE'))
                         current = ''
@@ -127,14 +136,16 @@ class Lexer:
                                 self.func_tokens[self.tokens[-1].word] = self.var_tokens[self.tokens[-1].word]
                                 del self.var_tokens[self.tokens[-1].word]
                             self.tokens.append(Token(s, 'SEPARATOR'))
-                            current = ''
                         elif s in operators and not ((s == '<' or s == '>') and self.tokens[-1].word == '#include'):
                             temp = s
                             if not space and len(self.tokens) > 0 and self.tokens[
                                 -1].word in operators + possible_operators:
                                 temp = self.tokens[-1].word + s
                                 if temp not in possible_operators:
-                                    raise Exception('jopa')
+                                    raise Exception(
+                                        f'\n[{row}, {column}] LexicalError, invalid operator "{current}":\n'
+                                        f'[{row}]: {self.__get_line(code, row)}\n'
+                                        f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                                 self.tokens.pop()
                             self.tokens.append(Token(temp, 'OPERATOR'))
                             current = ''
@@ -142,7 +153,9 @@ class Lexer:
                         space = False
                     else:
                         if len(current.replace(" ", "").replace("\t", "").replace("\n", "")) > 0:
-                            raise Exception('jopa')
+                            raise Exception(f'\n[{row}, {column}] LexicalError, invalid variable name "{current}":\n'
+                                            f'[{row}]: {self.__get_line(code, row)}\n'
+                                            f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                         space = True
                 else:
                     current += s

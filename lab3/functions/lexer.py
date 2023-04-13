@@ -1,4 +1,3 @@
-from lexer.functions import *
 from entities.constants import *
 from entities.token import Token
 

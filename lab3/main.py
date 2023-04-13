@@ -1,4 +1,4 @@
-from lexer.lexer_main import Lexer
+from functions.lexer import Lexer
 
 lexer = Lexer()
 tokens = lexer.get_tokens('/Users/vadinamo/Downloads/main.cpp')

@@ -7,7 +7,7 @@ class Lexer:
     def __init__(self):
         self.var_tokens = {}
         self.func_tokens = {}
-        self.constants = {}
+        self.constants_tokens = {}
         self.var_types_tokens = []
         self.key_word_tokens = []
 
@@ -85,11 +85,11 @@ class Lexer:
                 elif (s == '<' or s == '>') and self.tokens[-1].word == '#include':
                     current += s
                 elif len(current) > 0 and current[0] == '"' and current[-1] == '"':
-                    self.constants[current] = 'STRING CONSTANT'
+                    self.constants_tokens[current] = 'STRING CONSTANT'
                     self.tokens.append(Token(current, 'STRING CONSTANT'))
                     current = ''
                 elif len(current) > 0 and current[0] == "'" and current[-1] == "'":
-                    self.constants[current] = 'CHAR CONSTANT'
+                    self.constants_tokens[current] = 'CHAR CONSTANT'
                     self.tokens.append(Token(current, 'CHAR CONSTANT'))
                     current = ''
                 elif self.is_int(current):
@@ -113,20 +113,20 @@ class Lexer:
                             var_type = token.word
                             break
 
-                    if len(var_type) > 0 and (current in self.var_tokens.keys() or current in self.func_tokens.keys()):
-                        raise Exception(f'\n[{row}, {column}] LexicalError, redefinition of name "{current}":\n'
-                                        f'[{row}]: {self.__get_line(code, row)}\n'
-                                        f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
-                    else:
-                        if current not in self.var_tokens.keys():
-                            if len(var_type) == 0:
-                                raise Exception(
-                                    f'\n[{row}, {column}] LexicalError, unexpected "{current}":\n'
-                                    f'[{row}]: {self.__get_line(code, row)}\n'
-                                    f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
-                            self.var_tokens[current] = var_type
-                        self.tokens.append(Token(current, 'VARIABLE'))
-                        current = ''
+                    # if len(var_type) > 0 and (current in self.var_tokens.keys() or current in self.func_tokens.keys()):
+                    #     raise Exception(f'\n[{row}, {column}] LexicalError, redefinition of name "{current}":\n'
+                    #                     f'[{row}]: {self.__get_line(code, row)}\n'
+                    #                     f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                    # else:
+                    if current not in self.var_tokens.keys():
+                        if len(var_type) == 0:
+                            raise Exception(
+                                f'\n[{row}, {column}] LexicalError, unexpected "{current}":\n'
+                                f'[{row}]: {self.__get_line(code, row)}\n'
+                                f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                        self.var_tokens[current] = var_type
+                    self.tokens.append(Token(current, 'VARIABLE'))
+                    current = ''
 
                 if not char_read and not string_read:
                     if not self.is_control_character(s) and s != ' ':

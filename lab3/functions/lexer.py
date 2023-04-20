@@ -96,12 +96,14 @@ class Lexer:
                     if self.is_signed(space):
                         current = self.tokens[-1].word + current
                         self.tokens.pop()
+                    self.constants_tokens[current] = 'INT CONSTANT'
                     self.tokens.append(Token(current, 'INT CONSTANT'))
                     current = ''
                 elif self.is_float(current):
                     if self.is_signed(space):
                         current = self.tokens[-1].word + current
                         self.tokens.pop()
+                    self.constants_tokens[current] = 'FLOAT CONSTANT'
                     self.tokens.append(Token(current, 'FLOAT CONSTANT'))
                     current = ''
                 elif self.is_valid_variable_name(current):

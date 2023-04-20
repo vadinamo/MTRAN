@@ -6,3 +6,5 @@ key_words = ['#include', '<iostream>', 'using', 'namespace', 'std', 'for',
 operators = ['+', '-', '*', '/', '%', '=',  '<', '>', '&', '|', '!']
 possible_operators = ['==', '!=', '+=', '-=', '*=', '/=', '<<', '>>', '&&', '||', '++', '--']
 separators = [';', '{', '}', '(', ')', '[', ']', ',', ':']
+
+all_operators = operators + possible_operators

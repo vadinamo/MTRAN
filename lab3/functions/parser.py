@@ -38,6 +38,56 @@ class Parser:
 
         raise Exception(f'Expected number or variable at {self.position}')
 
+    def parse_parentheses(self) -> Node:
+        if self.match(['(']):
+            node = self.parse_formula()
+            self.require([')'])
+
+            return node
+
+        else:
+            return self.parse_variable_or_constant()
+
+    def parse_formula(self) -> Node:
+        left_node = self.parse_parentheses()
+        operation = self.match(all_operators)
+
+        while operation:
+            if operation.word == '<<' or operation.word == '>>':
+                self.position -= 1
+                break
+            elif operation.word == '++' or operation.word == '--':
+                left_node = UnaryOperationNode(operation, left_node)
+                operation = self.match(all_operators)
+            else:
+                right_node = self.parse_parentheses()
+                left_node = BinaryOperationNode(operation, left_node, right_node)
+                operation = self.match(all_operators)
+
+        return left_node
+
+    def parse_variable_definition(self, variable_token):
+        var = VariableNode(variable_token)
+
+        operation = self.match([','])
+        while operation:
+            new_var = self.match(self.lexer.var_tokens.keys())
+            if new_var:
+                var = BinaryOperationNode(Token('=', 'OPERATION'), var, VariableNode(new_var))
+            else:
+                raise Exception(f'Expected variable after "," at {self.position}')
+
+            operation = self.match([','])
+
+        operation = self.match(['='])
+        if operation:
+            value = self.parse_formula()
+            self.require([';'])
+            return BinaryOperationNode(operation, var, value)
+
+        self.require([';'])
+        return None
+
     def parse_cin(self):
         operation = self.match(['>>'])
         expression = []
@@ -89,58 +139,29 @@ class Parser:
         self.require(['{'])
         body = self.parse_code()
         self.require(['}'])
-        
+
         return ForNode(begin, condition, step, body)
 
-    def parse_parentheses(self) -> Node:
-        if self.match(['(']):
-            node = self.parse_formula()
-            self.require([')'])
+    def parse_if_else_condition(self):
+        self.require(['('])
+        condition = self.parse_formula()
+        self.require([')'])
 
-            return node
+        self.require(['{'])
+        body = self.parse_code()
+        self.require(['}'])
 
-        else:
-            return self.parse_variable_or_constant()
-
-    def parse_formula(self) -> Node:
-        left_node = self.parse_parentheses()
-        operation = self.match(all_operators)
-
-        while operation:
-            if operation.word == '<<' or operation.word == '>>':
-                self.position -= 1
-                break
-            elif operation.word == '++' or operation.word == '--':
-                left_node = UnaryOperationNode(operation, left_node)
-                operation = self.match(all_operators)
+        if self.match(['else']):
+            if self.match(['if']):
+                else_condition = self.parse_if_else_condition()
             else:
-                right_node = self.parse_parentheses()
-                left_node = BinaryOperationNode(operation, left_node, right_node)
-                operation = self.match(all_operators)
+                self.require(['{'])
+                else_condition = self.parse_code()
+                self.require(['}'])
 
-        return left_node
+            return IfNode(condition, body, else_condition)
 
-    def parse_variable_definition(self, variable_token):
-        var = VariableNode(variable_token)
-
-        operation = self.match([','])
-        while operation:
-            new_var = self.match(self.lexer.var_tokens.keys())
-            if new_var:
-                var = BinaryOperationNode(Token('=', 'OPERATION'), var, VariableNode(new_var))
-            else:
-                raise Exception(f'Expected variable after "," at {self.position}')
-
-            operation = self.match([','])
-
-        operation = self.match(['='])
-        if operation:
-            value = self.parse_formula()
-            self.require([';'])
-            return BinaryOperationNode(operation, var, value)
-
-        self.require([';'])
-        return None
+        return IfNode(condition, body, None)
 
     def parse_expression(self) -> Node:
         if self.match(self.lexer.var_tokens.keys()):
@@ -176,7 +197,7 @@ class Parser:
             elif key_word.word == 'for':
                 return self.parse_for()
             elif key_word.word == 'if':
-                pass
+                return self.parse_if_else_condition()
             elif key_word.word == 'switch':
                 pass
             elif key_word.word == 'while':

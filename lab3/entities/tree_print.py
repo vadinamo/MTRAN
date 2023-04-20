@@ -45,6 +45,12 @@ def get_tree_list(node: Node):
         tree.append(get_tree_list(node.condition))
         tree.append(get_tree_list(node.step))
         tree.append(get_tree_list(node.body))
+    elif isinstance(node, IfNode):
+        tree.append('if')
+        tree.append(get_tree_list(node.condition))
+        tree.append(get_tree_list(node.body))
+        tree.append('else')
+        tree.append(get_tree_list(node.else_condition))
 
 
     if len(tree) > 1:

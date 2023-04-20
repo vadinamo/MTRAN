@@ -163,6 +163,45 @@ class Parser:
 
         return IfNode(condition, body, None)
 
+    def parse_function_parameters(self, types=False):
+        parameters = []
+
+        if self.match([')']):
+            self.position -= 1
+            return parameters
+
+        if types:
+            self.require(self.lexer.var_types_tokens)
+        parameters.append(self.require(self.lexer.var_tokens.keys()))
+
+        comma = self.match([','])
+        while comma:
+            if types:
+                self.require(self.lexer.var_types_tokens)
+            parameters.append(self.require(self.lexer.var_tokens.keys()))
+            comma = self.match([','])
+
+        return parameters
+
+    def parse_function(self, function_token):
+        self.require(['('])
+        parameters = self.parse_function_parameters(True)
+        self.require([')'])
+
+        self.require(['{'])
+        body = self.parse_code()
+        self.require(['}'])
+
+        return FunctionNode(function_token, parameters, body)
+
+    def parse_function_call(self, function_token):
+        self.require(['('])
+        parameters = self.parse_function_parameters()
+        self.require([')'])
+        self.require([';'])
+
+        return FunctionCallNode(function_token, parameters)
+
     def parse_expression(self) -> Node:
         if self.match(self.lexer.var_tokens.keys()):
             self.position -= 1  # current position is variable
@@ -182,9 +221,13 @@ class Parser:
 
             function_token = self.match(self.lexer.func_tokens.keys())
             if function_token:
-                pass
+                return self.parse_function(function_token)
 
             raise Exception(f'Expected variable or function at {self.position}')
+
+        function_token = self.match(self.lexer.func_tokens.keys())
+        if function_token:
+            return self.parse_function_call(function_token)
 
         key_word = self.match(self.lexer.key_word_tokens)
         if key_word:

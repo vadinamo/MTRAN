@@ -120,7 +120,7 @@ class Lexer:
                     #                     f'[{row}]: {self.__get_line(code, row)}\n'
                     #                     f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                     # else:
-                    if current not in self.var_tokens.keys():
+                    if current not in self.var_tokens.keys() and current not in self.func_tokens.keys():
                         if len(var_type) == 0:
                             raise Exception(
                                 f'\n[{row}, {column}] LexicalError, unexpected "{current}":\n'

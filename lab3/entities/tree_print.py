@@ -51,7 +51,15 @@ def get_tree_list(node: Node):
         tree.append(get_tree_list(node.body))
         tree.append('else')
         tree.append(get_tree_list(node.else_condition))
-
+    elif isinstance(node, FunctionNode):
+        tree.append(node.name.word)
+        for p in node.parameters:
+            tree.append([p.word])
+        tree.append([get_tree_list(node.body)])
+    elif isinstance(node, FunctionCallNode):
+        tree.append(node.name.word)
+        for p in node.parameters:
+            tree.append([p.word])
 
     if len(tree) > 1:
         return tree

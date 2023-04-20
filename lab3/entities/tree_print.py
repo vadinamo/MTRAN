@@ -18,6 +18,13 @@ def get_tree_list(node: Node):
         tree.append(node.variable.word)
     elif isinstance(node, ConstantNode):
         tree.append(node.constant.word)
+    elif isinstance(node, CinNode):
+        tree.append('cin')
+        result = []
+        for e in node.expression:
+            result.append(get_tree_list(e))
+        tree.append(result)
+
 
     if len(tree) > 1:
         return tree
@@ -25,7 +32,7 @@ def get_tree_list(node: Node):
     return tree[0]
 
 
-def print_tree(node, level=-2):
+def print_tree(node, level=0):
     if isinstance(node, list):
         for child in node:
             print_tree(child, level + 1)

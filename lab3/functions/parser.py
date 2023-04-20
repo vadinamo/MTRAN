@@ -38,6 +38,17 @@ class Parser:
 
         raise Exception(f'Expected number or variable at {self.position}')
 
+    def parse_cin(self):
+        operation = self.match(['>>'])
+        expression = []
+
+        while operation:
+            expression.append(self.parse_formula())
+            operation = self.match(['>>'])
+
+        return expression
+
+
     def parse_parentheses(self) -> Node:
         if self.match(['(']):
             node = self.parse_formula()
@@ -70,24 +81,33 @@ class Parser:
                 right_formula_node = self.parse_formula()
                 return BinaryOperationNode(operation, var_node, right_formula_node)
 
-            self.require([';'])
-            return None
+        if self.match(self.lexer.var_types_tokens):
+            variable_token = self.match(self.lexer.var_tokens.keys())
+            if variable_token:
+                pass
 
-        var_types_result = self.match(self.lexer.var_types_tokens)
-        if var_types_result:
-            pass
+            function_token = self.match(self.lexer.func_tokens.keys())
+            if function_token:
+                pass
 
-        func_result = self.match(self.lexer.func_tokens.keys())
-        if func_result:
-            pass
+            raise Exception(f'Expected variable or function at {self.position}')
 
-        constant_result = self.match(self.lexer.constants_tokens.keys())
-        if constant_result:
-            pass
-
-        key_word_result = self.match(self.lexer.key_word_tokens)
-        if key_word_result:
-            pass
+        key_word = self.match(self.lexer.key_word_tokens)
+        if key_word:
+            if key_word.word == 'case':
+                pass
+            elif key_word.word == 'cin':
+                return CinNode(self.parse_cin())
+            elif key_word.word == 'cout':
+                pass
+            elif key_word.word == 'for':
+                pass
+            elif key_word.word == 'if':
+                pass
+            elif key_word.word == 'switch':
+                pass
+            elif key_word.word == 'while':
+                pass
 
     def parse_code(self) -> Node:
         root = StatementsNode()

@@ -65,6 +65,17 @@ class Parser:
         self.require([';'])
         return expression
 
+    def parse_while(self):
+        self.require(['('])
+        condition = self.parse_formula()
+        self.require([')'])
+        self.require(['{'])
+        body = self.parse_code()
+
+        self.position -= 1
+        self.require(['}'])
+        return WhileNode(condition, body)
+
     def parse_parentheses(self) -> Node:
         if self.match(['(']):
             node = self.parse_formula()
@@ -90,7 +101,7 @@ class Parser:
 
         return left_node
 
-    def parse_variable(self, variable_token):
+    def parse_variable_definition(self, variable_token):
         var = VariableNode(variable_token)
 
         operation = self.match([','])
@@ -127,7 +138,7 @@ class Parser:
         if self.match(self.lexer.var_types_tokens):
             variable_token = self.match(self.lexer.var_tokens.keys())
             if variable_token:
-                return self.parse_variable(variable_token)
+                return self.parse_variable_definition(variable_token)
 
             function_token = self.match(self.lexer.func_tokens.keys())
             if function_token:
@@ -150,11 +161,13 @@ class Parser:
             elif key_word.word == 'switch':
                 pass
             elif key_word.word == 'while':
-                pass
+                return self.parse_while()
 
-    def parse_code(self) -> Node:
+    def parse_code(self) -> Node:  # block parse
         root = StatementsNode()
         while self.position < len(self.tokens):
+            if self.match(['}']):
+                return root
             code_string_node = self.parse_expression()
             if code_string_node:
                 root.add_node(code_string_node)

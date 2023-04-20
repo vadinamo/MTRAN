@@ -32,6 +32,10 @@ def get_tree_list(node: Node):
         for e in node.expression:
             result.append(get_tree_list(e))
         tree.append(result)
+    elif isinstance(node, WhileNode):
+        tree.append('while')
+        tree.append(get_tree_list(node.condition))
+        tree.append(get_tree_list(node.body))
 
 
     if len(tree) > 1:

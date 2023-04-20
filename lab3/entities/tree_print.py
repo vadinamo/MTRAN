@@ -18,8 +18,16 @@ def get_tree_list(node: Node):
         tree.append(node.variable.word)
     elif isinstance(node, ConstantNode):
         tree.append(node.constant.word)
+    elif isinstance(node, KeyWordNode):
+        tree.append(node.word.word)
     elif isinstance(node, CinNode):
         tree.append('cin')
+        result = []
+        for e in node.expression:
+            result.append(get_tree_list(e))
+        tree.append(result)
+    elif isinstance(node, CoutNode):
+        tree.append('cout')
         result = []
         for e in node.expression:
             result.append(get_tree_list(e))

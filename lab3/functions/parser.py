@@ -46,8 +46,24 @@ class Parser:
             expression.append(self.parse_formula())
             operation = self.match(['>>'])
 
+        self.require([';'])
         return expression
 
+    def parse_cout(self):
+        operation = self.match(['<<'])
+        expression = []
+
+        while operation:
+            endl = self.match(['endl'])
+            if endl:
+                expression.append(KeyWordNode(endl))
+            else:
+                expression.append(self.parse_formula())
+
+            operation = self.match(['<<'])
+
+        self.require([';'])
+        return expression
 
     def parse_parentheses(self) -> Node:
         if self.match(['(']):
@@ -64,9 +80,13 @@ class Parser:
         operation = self.match(all_operators)
 
         while operation:
-            right_node = self.parse_parentheses()
-            left_node = BinaryOperationNode(operation, left_node, right_node)
-            operation = self.match(all_operators)
+            if operation.word == '<<' or operation.word == '>>':
+                self.position -= 1
+                break
+            else:
+                right_node = self.parse_parentheses()
+                left_node = BinaryOperationNode(operation, left_node, right_node)
+                operation = self.match(all_operators)
 
         return left_node
 
@@ -79,12 +99,13 @@ class Parser:
             if operation:
                 # unary and array processing
                 right_formula_node = self.parse_formula()
+                self.require([';'])
                 return BinaryOperationNode(operation, var_node, right_formula_node)
 
         if self.match(self.lexer.var_types_tokens):
             variable_token = self.match(self.lexer.var_tokens.keys())
             if variable_token:
-                pass
+                print('asd')
 
             function_token = self.match(self.lexer.func_tokens.keys())
             if function_token:
@@ -99,7 +120,7 @@ class Parser:
             elif key_word.word == 'cin':
                 return CinNode(self.parse_cin())
             elif key_word.word == 'cout':
-                pass
+                return CoutNode(self.parse_cout())
             elif key_word.word == 'for':
                 pass
             elif key_word.word == 'if':
@@ -113,7 +134,6 @@ class Parser:
         root = StatementsNode()
         while self.position < len(self.tokens):
             code_string_node = self.parse_expression()
-            self.require([';'])  # must be changed
             root.add_node(code_string_node)
 
         return root

@@ -9,6 +9,5 @@ max_length = max(len(t.word + t.token_type) for t in tokens) + 1
 # for t in tokens:
 #     print(t.token_type + ' ' * (max_length - len(t.word + t.token_type)) + t.word)
 
-lexer.tokens.pop(0)
 parser = Parser(lexer)
 print_tree(get_tree_list(parser.parse_code()))

@@ -90,6 +90,28 @@ class Parser:
 
         return left_node
 
+    def parse_variable(self, variable_token):
+        var = VariableNode(variable_token)
+
+        operation = self.match([','])
+        while operation:
+            new_var = self.match(self.lexer.var_tokens.keys())
+            if new_var:
+                var = BinaryOperationNode(Token('=', 'OPERATION'), var, VariableNode(new_var))
+            else:
+                raise Exception(f'Expected variable after "," at {self.position}')
+
+            operation = self.match([','])
+
+        operation = self.match(['='])
+        if operation:
+            value = self.parse_formula()
+            self.require([';'])
+            return BinaryOperationNode(operation, var, value)
+
+        self.require([';'])
+        return None
+
     def parse_expression(self) -> Node:
         if self.match(self.lexer.var_tokens.keys()):
             self.position -= 1  # current position is variable
@@ -105,7 +127,7 @@ class Parser:
         if self.match(self.lexer.var_types_tokens):
             variable_token = self.match(self.lexer.var_tokens.keys())
             if variable_token:
-                print('asd')
+                return self.parse_variable(variable_token)
 
             function_token = self.match(self.lexer.func_tokens.keys())
             if function_token:
@@ -134,6 +156,7 @@ class Parser:
         root = StatementsNode()
         while self.position < len(self.tokens):
             code_string_node = self.parse_expression()
-            root.add_node(code_string_node)
+            if code_string_node:
+                root.add_node(code_string_node)
 
         return root

@@ -47,7 +47,7 @@ class Parser:
             operation = self.match(['>>'])
 
         self.require([';'])
-        return expression
+        return CinNode(expression)
 
     def parse_cout(self):
         operation = self.match(['<<'])
@@ -63,18 +63,34 @@ class Parser:
             operation = self.match(['<<'])
 
         self.require([';'])
-        return expression
+        return CoutNode(expression)
 
     def parse_while(self):
         self.require(['('])
         condition = self.parse_formula()
         self.require([')'])
+
         self.require(['{'])
         body = self.parse_code()
-
-        self.position -= 1
         self.require(['}'])
+
         return WhileNode(condition, body)
+
+    def parse_for(self):
+        self.require(['('])
+        self.match(self.lexer.var_types_tokens)
+        begin = self.parse_formula()
+        self.require([';'])
+        condition = self.parse_formula()
+        self.require([';'])
+        step = self.parse_formula()
+        self.require([')'])
+
+        self.require(['{'])
+        body = self.parse_code()
+        self.require(['}'])
+        
+        return ForNode(begin, condition, step, body)
 
     def parse_parentheses(self) -> Node:
         if self.match(['(']):
@@ -94,6 +110,9 @@ class Parser:
             if operation.word == '<<' or operation.word == '>>':
                 self.position -= 1
                 break
+            elif operation.word == '++' or operation.word == '--':
+                left_node = UnaryOperationNode(operation, left_node)
+                operation = self.match(all_operators)
             else:
                 right_node = self.parse_parentheses()
                 left_node = BinaryOperationNode(operation, left_node, right_node)
@@ -151,11 +170,11 @@ class Parser:
             if key_word.word == 'case':
                 pass
             elif key_word.word == 'cin':
-                return CinNode(self.parse_cin())
+                return self.parse_cin()
             elif key_word.word == 'cout':
-                return CoutNode(self.parse_cout())
+                return self.parse_cout()
             elif key_word.word == 'for':
-                pass
+                return self.parse_for()
             elif key_word.word == 'if':
                 pass
             elif key_word.word == 'switch':
@@ -167,6 +186,7 @@ class Parser:
         root = StatementsNode()
         while self.position < len(self.tokens):
             if self.match(['}']):
+                self.position -= 1
                 return root
             code_string_node = self.parse_expression()
             if code_string_node:

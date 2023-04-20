@@ -10,6 +10,9 @@ def get_tree_list(node: Node):
     if isinstance(node, StatementsNode):
         for n in node.nodes:
             tree.append(get_tree_list(n))
+    elif isinstance(node, UnaryOperationNode):
+        tree.append(get_tree_list(node.node))
+        tree.append(node.operation.word)
     elif isinstance(node, BinaryOperationNode):
         tree.append(get_tree_list(node.left_node))
         tree.append(node.operation.word)
@@ -35,6 +38,12 @@ def get_tree_list(node: Node):
     elif isinstance(node, WhileNode):
         tree.append('while')
         tree.append(get_tree_list(node.condition))
+        tree.append(get_tree_list(node.body))
+    elif isinstance(node, ForNode):
+        tree.append('for')
+        tree.append(get_tree_list(node.begin))
+        tree.append(get_tree_list(node.condition))
+        tree.append(get_tree_list(node.step))
         tree.append(get_tree_list(node.body))
 
 

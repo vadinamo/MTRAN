@@ -7,13 +7,12 @@ class Parser:
     def __init__(self, lexer: Lexer):
         self.tokens = lexer.tokens
         self.position = 0
-        self.scope = {}
         self.lexer = lexer  # instead of
 
     def match(self, expected: []) -> Token:
         if self.position < len(self.tokens):
             current_token = self.tokens[self.position]
-            print(current_token.word, expected, current_token.word in expected)
+            # print(current_token.word, expected, current_token.word in expected)
             if current_token.word in expected:
                 self.position += 1
                 return current_token

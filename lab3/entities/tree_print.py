@@ -22,7 +22,7 @@ def get_tree_list(node: Node):
     elif isinstance(node, ConstantNode):
         tree.append(node.constant.word)
     elif isinstance(node, KeyWordNode):
-        tree.append(node.word.word)
+        tree.append([node.word.word])
     elif isinstance(node, CinNode):
         tree.append('cin')
         result = []
@@ -60,6 +60,13 @@ def get_tree_list(node: Node):
         tree.append(node.name.word)
         for p in node.parameters:
             tree.append([p.word])
+    elif isinstance(node, SwitchNode):
+        tree.append('switch')
+        tree.append(node.variable.word)
+        tree.append(get_tree_list(node.body))
+    elif isinstance(node, CaseNode):
+        tree.append('case')
+        tree.append(node.variable.word)
 
     if len(tree) > 1:
         return tree

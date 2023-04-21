@@ -69,15 +69,15 @@ class Parser:
     def parse_variable_definition(self, variable_token):
         var = VariableNode(variable_token)
 
-        operation = self.match([','])
-        while operation:
-            new_var = self.match(self.lexer.var_tokens.keys())
+        comma = self.match([','])
+        while comma:
+            new_var = self.require(self.lexer.var_tokens.keys())
             if new_var:
-                var = BinaryOperationNode(Token('=', 'OPERATION'), var, VariableNode(new_var))
+                var = VariableNode(new_var)
             else:
                 raise Exception(f'Expected variable after "," at {self.position}')
 
-            operation = self.match([','])
+            comma = self.match([','])
 
         operation = self.match(['='])
         if operation:
@@ -202,6 +202,27 @@ class Parser:
 
         return FunctionCallNode(function_token, parameters)
 
+    def parse_switch(self):
+        self.require(['('])
+        variable = self.require(self.lexer.var_tokens.keys())
+        self.require([')'])
+
+        self.require(['{'])
+        body = self.parse_code()
+        self.require(['}'])
+
+        return SwitchNode(variable, body)
+
+    def parse_case(self):
+        constant = self.parse_variable_or_constant()
+        self.require([':'])
+
+        return CaseNode(constant.constant)
+
+    def parse_key_word(self, key_word):
+        self.require([':'] if key_word.word == 'default' else [';'])
+        return KeyWordNode(key_word)
+
     def parse_expression(self) -> Node:
         if self.match(self.lexer.var_tokens.keys()):
             self.position -= 1  # current position is variable
@@ -232,7 +253,9 @@ class Parser:
         key_word = self.match(self.lexer.key_word_tokens)
         if key_word:
             if key_word.word == 'case':
-                pass
+                return self.parse_case()
+            if key_word.word == 'default':
+                return self.parse_key_word(key_word)
             elif key_word.word == 'cin':
                 return self.parse_cin()
             elif key_word.word == 'cout':
@@ -242,7 +265,11 @@ class Parser:
             elif key_word.word == 'if':
                 return self.parse_if_else_condition()
             elif key_word.word == 'switch':
-                pass
+                return self.parse_switch()
+            elif key_word.word == 'continue':
+                return self.parse_key_word(key_word)
+            elif key_word.word == 'break':
+                return self.parse_key_word(key_word)
             elif key_word.word == 'while':
                 return self.parse_while()
 

@@ -1,6 +1,6 @@
 from functions.lexer import Lexer
 from nodes.nodes_module import *
-from entities.constants import all_operators
+from entities.constants import all_operators, ignore
 
 
 class Parser:
@@ -20,10 +20,13 @@ class Parser:
 
         return None
 
+    def get_prev(self):
+        return self.tokens[self.position - 1].word
+
     def require(self, expected):
         token = self.match(expected)
         if token is None:
-            raise Exception(f'Expected {expected} at {self.position}')
+            raise Exception(f'Expected {expected} after {self.get_prev()}')
 
         return token
 
@@ -36,7 +39,12 @@ class Parser:
         if var:
             return VariableNode(var)
 
-        raise Exception(f'Expected number or variable at {self.position}')
+        constant = self.tokens[self.position]
+        if constant.word == 'true' or constant.word == 'false':
+            self.position += 1
+            return ConstantNode(constant)
+
+        raise Exception(f'Expected number or variable after  {self.get_prev()}')
 
     def parse_parentheses(self) -> Node:
         if self.match(['(']):
@@ -75,7 +83,7 @@ class Parser:
             if new_var:
                 var = VariableNode(new_var)
             else:
-                raise Exception(f'Expected variable after "," at {self.position}')
+                raise Exception(f'Expected variable after "," after {self.get_prev()}')
 
             comma = self.match([','])
 
@@ -244,7 +252,7 @@ class Parser:
             if function_token:
                 return self.parse_function(function_token)
 
-            raise Exception(f'Expected variable or function at {self.position}')
+            raise Exception(f'Expected variable or function after {self.get_prev()}')
 
         function_token = self.match(self.lexer.func_tokens.keys())
         if function_token:
@@ -252,6 +260,8 @@ class Parser:
 
         key_word = self.match(self.lexer.key_word_tokens)
         if key_word:
+            if key_word.word in ignore:
+                return None
             if key_word.word == 'case':
                 return self.parse_case()
             if key_word.word == 'default':

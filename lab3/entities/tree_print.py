@@ -3,8 +3,7 @@ from nodes.nodes_module import *
 
 def get_tree_list(node: Node):
     tree = []
-
-    if not node:
+    if node is None:
         return
 
     if isinstance(node, StatementsNode):
@@ -49,9 +48,12 @@ def get_tree_list(node: Node):
         tree.append('if')
         tree.append(get_tree_list(node.condition))
         tree.append(get_tree_list(node.body))
-        tree.append('else')
-        tree.append(get_tree_list(node.else_condition))
+
+        if node.else_condition:
+            tree.append('else')
+            tree.append(get_tree_list(node.else_condition))
     elif isinstance(node, FunctionNode):
+        tree.append('function')
         tree.append(node.name.word)
         for p in node.parameters:
             tree.append([p.word])

@@ -1,6 +1,6 @@
 from functions.lexer import Lexer
 from nodes.nodes_module import *
-from entities.constants import all_operators, ignore
+from entities.constants import all_operators, ignore, libs, namespaces
 
 
 class Parser:
@@ -13,7 +13,7 @@ class Parser:
     def match(self, expected: []) -> Token:
         if self.position < len(self.tokens):
             current_token = self.tokens[self.position]
-            # print(current_token.word, expected, current_token.word in expected)
+            print(current_token.word, expected, current_token.word in expected)
             if current_token.word in expected:
                 self.position += 1
                 return current_token
@@ -43,6 +43,9 @@ class Parser:
         if constant.word == 'true' or constant.word == 'false':
             self.position += 1
             return ConstantNode(constant)
+        elif constant.word == "!":
+            self.position += 1
+            return UnaryOperationNode(constant, self.parse_formula())
 
         raise Exception(f'Expected number or variable after  {self.get_prev()}')
 
@@ -66,11 +69,11 @@ class Parser:
                 break
             elif operation.word == '++' or operation.word == '--':
                 left_node = UnaryOperationNode(operation, left_node)
-                operation = self.match(all_operators)
+                operation = self.match(all_operators + [':'])
             else:
                 right_node = self.parse_parentheses()
                 left_node = BinaryOperationNode(operation, left_node, right_node)
-                operation = self.match(all_operators)
+                operation = self.match(all_operators + [':'])
 
         return left_node
 
@@ -139,8 +142,10 @@ class Parser:
         self.match(self.lexer.var_types_tokens)
         begin = self.parse_formula()
         self.require([';'])
+
         condition = self.parse_formula()
         self.require([';'])
+
         step = self.parse_formula()
         self.require([')'])
 
@@ -231,6 +236,15 @@ class Parser:
         self.require([':'] if key_word.word == 'default' else [';'])
         return KeyWordNode(key_word)
 
+    def parse_ignored_keywords(self, key_word):
+        if key_word.word == '#include':
+            self.require(libs)
+        elif key_word.word == 'using':
+            self.require(['namespace'])
+            self.require(namespaces)
+            self.require([';'])
+        return None
+
     def parse_expression(self) -> Node:
         if self.match(self.lexer.var_tokens.keys()):
             self.position -= 1  # current position is variable
@@ -261,10 +275,10 @@ class Parser:
         key_word = self.match(self.lexer.key_word_tokens)
         if key_word:
             if key_word.word in ignore:
-                return None
-            if key_word.word == 'case':
+                return self.parse_ignored_keywords(key_word)
+            elif key_word.word == 'case':
                 return self.parse_case()
-            if key_word.word == 'default':
+            elif key_word.word == 'default':
                 return self.parse_key_word(key_word)
             elif key_word.word == 'cin':
                 return self.parse_cin()

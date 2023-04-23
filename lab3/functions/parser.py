@@ -76,27 +76,55 @@ class Parser:
 
         return left_node
 
+    def parse_array_elements(self):
+        self.require(['{'])
+
+        result = []
+        while True:
+            if self.match(['{']):
+                self.position -= 1
+                result.append(self.parse_array_elements())
+            else:
+                result.append(self.parse_formula())
+
+            s = self.require([',', '}'])
+            if s.word == '}':
+                return result
+
     def parse_variable_definition(self, variable_token):
         var = VariableNode(variable_token)
+        result = []
 
-        comma = self.match([','])
-        while comma:
-            new_var = self.require(self.lexer.var_tokens.keys())
-            if new_var:
-                var = VariableNode(new_var)
-            else:
-                raise Exception(f'Expected variable after "," after {self.get_prev()}')
+        s = self.require([',', '=', '[', ';', '{'])
+        while s:
+            if s.word == '[':
+                sizes = []
 
-            comma = self.match([','])
+                bracket = s
+                while bracket:
+                    size = self.parse_formula()
+                    sizes.append(size)
+                    self.require([']'])
+                    bracket = self.match(['['])
 
-        operation = self.match(['='])
-        if operation:
-            value = self.parse_formula()
-            self.require([';'])
-            return BinaryOperationNode(operation, var, value)
+                var = ArrayDefinition(var, sizes)
+                result.append(var)
+            elif s.word == ',':
+                var = VariableNode(self.require(self.lexer.var_tokens.keys()))
+            elif s.word == '=':
+                if not isinstance(var, VariableNode):
+                    raise Exception(f'Variable {var.variable.variable.word} was declared as an array')
+                result.append(BinaryOperationNode(Token('=', 'OPERATION'), var, self.parse_formula()))
+            elif s.word == '{':
+                if not isinstance(var, ArrayDefinition):
+                    raise Exception(f'Variable {var.variable.word} was not declared as an array')
 
-        self.require([';'])
-        return None
+                self.position -= 1
+                result[-1].elements = self.parse_array_elements()
+            elif s.word == ';':
+                return result
+
+            s = self.require([',', '=', '[', ';', '{'])
 
     def parse_cin(self):
         operation = self.match(['>>'])
@@ -304,6 +332,10 @@ class Parser:
                 return root
             code_string_node = self.parse_expression()
             if code_string_node:
-                root.add_node(code_string_node)
+                if isinstance(code_string_node, list):
+                    for node in code_string_node:
+                        root.add_node(node)
+                else:
+                    root.add_node(code_string_node)
 
         return root

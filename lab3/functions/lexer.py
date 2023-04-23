@@ -61,6 +61,7 @@ class Lexer:
         current = ''
         string_read = False
         char_read = False
+        var_type = ''
 
         row, column = 1, 1
         for s in code:
@@ -75,6 +76,7 @@ class Lexer:
 
             else:
                 if current in var_types:
+                    var_type = current
                     self.var_types_tokens.append(current)
                     self.tokens.append(Token(current, 'VARIABLE TYPE'))
                     current = ''
@@ -107,14 +109,6 @@ class Lexer:
                     self.tokens.append(Token(current, 'FLOAT CONSTANT'))
                     current = ''
                 elif self.is_valid_variable_name(current):
-                    var_type = ''
-                    for token in reversed(self.tokens):
-                        if token.word != ',' and token.word in separators:  # not find
-                            break
-                        elif token.word in var_types:  # find a var type
-                            var_type = token.word
-                            break
-
                     # if len(var_type) > 0 and (current in self.var_tokens.keys() or current in self.func_tokens.keys()):
                     #     raise Exception(f'\n[{row}, {column}] LexicalError, redefinition of name "{current}":\n'
                     #                     f'[{row}]: {self.__get_line(code, row)}\n'
@@ -163,6 +157,7 @@ class Lexer:
                     current += s
 
             if s == '\n':
+                var_type = ''
                 row += 1
                 column = 1
             else:

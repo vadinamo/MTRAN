@@ -1,12 +1,17 @@
 from nodes.nodes_module import *
 
 
-def get_tree_list(node: Node):
+def get_tree_list(node):
     tree = []
     if node is None:
         return
 
-    if isinstance(node, StatementsNode):
+    if isinstance(node, Token):
+        return node.word
+    elif isinstance(node, list):
+        for n in node:
+            tree.append([get_tree_list(n)])
+    elif isinstance(node, StatementsNode):
         for n in node.nodes:
             tree.append(get_tree_list(n))
     elif isinstance(node, UnaryOperationNode):
@@ -25,14 +30,12 @@ def get_tree_list(node: Node):
     elif isinstance(node, CinNode):
         tree.append('cin')
         result = []
-        for e in node.expression:
-            result.append(get_tree_list(e))
+        tree.append(get_tree_list(node.expression))
         tree.append(result)
     elif isinstance(node, CoutNode):
         tree.append('cout')
         result = []
-        for e in node.expression:
-            result.append(get_tree_list(e))
+        tree.append(get_tree_list(node.expression))
         tree.append(result)
     elif isinstance(node, WhileNode):
         tree.append('while')
@@ -55,13 +58,11 @@ def get_tree_list(node: Node):
     elif isinstance(node, FunctionNode):
         tree.append('function')
         tree.append(node.name.word)
-        for p in node.parameters:
-            tree.append([p.word])
+        tree.append(get_tree_list(node.parameters))
         tree.append([get_tree_list(node.body)])
     elif isinstance(node, FunctionCallNode):
         tree.append(node.name.word)
-        for p in node.parameters:
-            tree.append([p.word])
+        tree.append(get_tree_list(node.parameters))
     elif isinstance(node, SwitchNode):
         tree.append('switch')
         tree.append(node.variable.word)
@@ -69,8 +70,14 @@ def get_tree_list(node: Node):
     elif isinstance(node, CaseNode):
         tree.append('case')
         tree.append(node.variable.word)
+    elif isinstance(node, ArrayDefinition):
+        tree.append(node.variable.variable.word)
+        tree.append('size:')
+        tree.append(get_tree_list(node.sizes))
+        tree.append('elements:')
+        tree.append(get_tree_list(node.elements))
 
-    if len(tree) > 1:
+    if len(tree) == 0 or len(tree) > 1:
         return tree
 
     return tree[0]

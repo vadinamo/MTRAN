@@ -10,4 +10,4 @@ tokens = lexer.get_tokens('/Users/vadinamo/Downloads/test1.cpp')
 #     print(t.token_type + ' ' * (max_length - len(t.word + t.token_type)) + t.word)
 
 parser = Parser(lexer)
-print_tree(get_tree_list(parser.parse_code()))
+print_tree(get_tree_list(parser.parse_block()))

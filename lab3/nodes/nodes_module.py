@@ -11,6 +11,7 @@ from nodes.function_node import *
 from nodes.if_node import *
 from nodes.key_word_node import *
 from nodes.node import *
+from nodes.return_node import *
 from nodes.statements_node import *
 from nodes.switch_node import *
 from nodes.unary_operation_node import *

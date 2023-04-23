@@ -1,346 +1,359 @@
 from functions.lexer import Lexer
 from nodes.nodes_module import *
-from entities.constants import all_operators, ignore, libs, namespaces
+from entities.constants import all_operators, ignore, libs, namespaces, booleans
 
 
 class Parser:
     def __init__(self, lexer: Lexer):
-        self.tokens = lexer.tokens
-        self.position = 0
-        self.lexer = lexer  # instead of
+        self._tokens = lexer.tokens
+        self._position = 0
 
-    def match(self, expected: []) -> Token:
-        if self.position < len(self.tokens):
-            current_token = self.tokens[self.position]
+        self._key_words = lexer.key_word_tokens
+        self._constants = lexer.constants_tokens.keys()
+        self._variable_types = lexer.var_types_tokens
+        self._variables = lexer.var_tokens.keys()
+        self._functions = lexer.func_tokens.keys()
+
+    def _match(self, expected: []) -> Token:
+        if self._position < len(self._tokens):
+            current_token = self._tokens[self._position]
             # print(current_token.word, expected, current_token.word in expected)
             if current_token.word in expected:
-                self.position += 1
+                self._position += 1
                 return current_token
 
         return None
 
-    def get_prev(self):
-        return self.tokens[self.position - 1].word
+    def _get_prev(self):
+        return self._tokens[self._position - 1].word
 
-    def require(self, expected):
-        token = self.match(expected)
+    def _require(self, expected):
+        token = self._match(expected)
         if token is None:
-            raise Exception(f'Expected {expected} after {self.get_prev()}')
+            raise Exception(f'Expected {expected} after {self._get_prev()}')
 
         return token
 
-    def parse_variable_or_constant(self) -> Node:
-        constant = self.match(self.lexer.constants_tokens.keys())
+    def _parse_variable_or_constant(self) -> Node:
+        constant = self._match(self._constants)
         if constant:
             return ConstantNode(constant)
 
-        var = self.match(self.lexer.var_tokens.keys())
+        constant = self._match(booleans + ['!'])
+        if constant:
+            if constant.word in booleans:
+                return ConstantNode(constant)
+            elif constant.word == '!':
+                return UnaryOperationNode(constant, self._parse_formula())
+
+        var = self._match(self._variables)
         if var:
             var = VariableNode(var)
-            bracket = self.match(['['])
-            while bracket:
-                index = self.parse_formula()
-                var = BinaryOperationNode(bracket, var, index)
-                self.require([']'])
 
-                bracket = self.match(['['])
+            bracket = self._match(['['])
+            while bracket:
+                index = self._parse_formula()
+                var = BinaryOperationNode(bracket, var, index)
+                self._require([']'])
+
+                bracket = self._match(['['])
 
             return var
 
-        constant = self.tokens[self.position]
-        if constant.word == 'true' or constant.word == 'false':
-            self.position += 1
-            return ConstantNode(constant)
-        elif constant.word == "!":
-            self.position += 1
-            return UnaryOperationNode(constant, self.parse_formula())
+        raise Exception(f'Expected number or variable after  {self._get_prev()}')
 
-        raise Exception(f'Expected number or variable after  {self.get_prev()}')
-
-    def parse_parentheses(self) -> Node:
-        if self.match(['(']):
-            node = self.parse_formula()
-            self.require([')'])
+    def _parse_parentheses(self) -> Node:
+        if self._match(['(']):
+            node = self._parse_formula()
+            self._require([')'])
 
             return node
-
         else:
-            return self.parse_variable_or_constant()
+            return self._parse_variable_or_constant()
 
-    def parse_formula(self) -> Node:
-        left_node = self.parse_parentheses()
-        operation = self.match(all_operators)
+    def _parse_formula(self) -> Node:
+        left_node = self._parse_parentheses()
+        operation = self._match(all_operators)
 
         while operation:
             if operation.word == '<<' or operation.word == '>>':
-                self.position -= 1
+                self._position -= 1
                 break
             elif operation.word == '++' or operation.word == '--':
                 left_node = UnaryOperationNode(operation, left_node)
-                operation = self.match(all_operators + [':'])
+                operation = self._match(all_operators + [':'])
             else:
-                right_node = self.parse_parentheses()
+                right_node = self._parse_parentheses()
                 left_node = BinaryOperationNode(operation, left_node, right_node)
-                operation = self.match(all_operators + [':'])
+                operation = self._match(all_operators + [':'])
 
         return left_node
 
-    def parse_array(self):
-        self.require(['{'])
+    def _parse_array(self):
+        self._require(['{'])
 
         result = []
         while True:
-            if self.match(['{']):
-                self.position -= 1
-                result.append(self.parse_array())
+            if self._match(['{']):
+                self._position -= 1
+                result.append(self._parse_array())
             else:
-                result.append(self.parse_formula())
+                result.append(self._parse_formula())
 
-            s = self.require([',', '}'])
-            if s.word == '}':
+            if self._require([',', '}']).word == '}':
                 return result
 
-    def parse_variable_definition(self, variable_token):
+    def _parse_variable_definition(self, variable_token):
         var = VariableNode(variable_token)
         result = []
 
-        s = self.require([',', '=', '[', ';', '{'])
+        separators = [',', '=', '[', ';', '{']
+        s = self._require(separators)
         while s:
             if s.word == '[':
                 sizes = []
 
                 bracket = s
                 while bracket:
-                    size = self.parse_formula()
+                    size = self._parse_formula()
                     sizes.append(size)
-                    self.require([']'])
-                    bracket = self.match(['['])
+                    self._require([']'])
+                    bracket = self._match(['['])
 
                 var = ArrayDefinition(var, sizes)
                 result.append(var)
             elif s.word == ',':
-                var = VariableNode(self.require(self.lexer.var_tokens.keys()))
+                var = VariableNode(self._require(self._variables))
             elif s.word == '=':
                 if not isinstance(var, VariableNode):
                     raise Exception(f'Variable {var.variable.variable.word} was declared as an array')
 
-                result.append(BinaryOperationNode(Token('=', 'OPERATION'), var, self.parse_formula()))
+                result.append(BinaryOperationNode(Token('=', 'OPERATION'), var, self._parse_formula()))
             elif s.word == '{':
                 if not isinstance(var, ArrayDefinition):
                     raise Exception(f'Variable {var.variable.word} was not declared as an array')
 
-                self.position -= 1
-                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result[-1], Array(self.parse_array())))
+                self._position -= 1
+                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result[-1], Array(self._parse_array())))
             elif s.word == ';':
                 return result
 
-            s = self.require([',', '=', '[', ';', '{'])
+            s = self._require(separators)
 
-    def parse_cin(self):
-        operation = self.match(['>>'])
+    def _parse_cin(self):
         expression = []
 
+        operation = self._match(['>>'])
         while operation:
-            expression.append(self.parse_formula())
-            operation = self.match(['>>'])
+            expression.append(self._parse_formula())
+            operation = self._match(['>>'])
 
-        self.require([';'])
+        self._require([';'])
         return CinNode(expression)
 
-    def parse_cout(self):
-        operation = self.match(['<<'])
+    def _parse_cout(self):
         expression = []
 
+        operation = self._match(['<<'])
         while operation:
-            endl = self.match(['endl'])
-            if endl:
-                expression.append(KeyWordNode(endl))
-            else:
-                expression.append(self.parse_formula())
+            endl = self._match(['endl'])
+            expression.append(KeyWordNode(endl) if endl else self._parse_formula())
 
-            operation = self.match(['<<'])
+            operation = self._match(['<<'])
 
-        self.require([';'])
+        self._require([';'])
         return CoutNode(expression)
 
-    def parse_while(self):
-        self.require(['('])
-        condition = self.parse_formula()
-        self.require([')'])
+    def _parse_while(self):
+        self._require(['('])
+        condition = self._parse_formula()
+        self._require([')'])
 
-        self.require(['{'])
-        body = self.parse_code()
-        self.require(['}'])
+        self._require(['{'])
+        body = self.parse_block()
+        self._require(['}'])
 
         return WhileNode(condition, body)
 
-    def parse_for(self):
-        self.require(['('])
-        self.match(self.lexer.var_types_tokens)
-        begin = self.parse_formula()
-        self.require([';'])
+    def _parse_for(self):
+        self._require(['('])
+        self._match(self._variable_types)
+        begin = self._parse_formula()
+        self._require([';'])
 
-        condition = self.parse_formula()
-        self.require([';'])
+        condition = self._parse_formula()
+        self._require([';'])
 
-        step = self.parse_formula()
-        self.require([')'])
+        step = self._parse_formula()
+        self._require([')'])
 
-        self.require(['{'])
-        body = self.parse_code()
-        self.require(['}'])
+        self._require(['{'])
+        body = self.parse_block()
+        self._require(['}'])
 
         return ForNode(begin, condition, step, body)
 
-    def parse_if_else_condition(self):
-        self.require(['('])
-        condition = self.parse_formula()
-        self.require([')'])
+    def _parse_if_else_condition(self):
+        self._require(['('])
+        condition = self._parse_formula()
+        self._require([')'])
 
-        self.require(['{'])
-        body = self.parse_code()
-        self.require(['}'])
+        self._require(['{'])
+        body = self.parse_block()
+        self._require(['}'])
 
-        if self.match(['else']):
-            if self.match(['if']):
-                else_condition = self.parse_if_else_condition()
+        if self._match(['else']):
+            if self._match(['if']):
+                else_condition = self._parse_if_else_condition()
             else:
-                self.require(['{'])
-                else_condition = self.parse_code()
-                self.require(['}'])
+                self._require(['{'])
+                else_condition = self.parse_block()
+                self._require(['}'])
 
             return IfNode(condition, body, else_condition)
 
         return IfNode(condition, body, None)
 
-    def parse_function_parameters(self, types=False):
+    def _parse_function_parameters(self, types=False):
         parameters = []
 
-        if self.match([')']):
-            self.position -= 1
+        if self._match([')']):
+            self._position -= 1
             return parameters
 
         if types:
-            self.require(self.lexer.var_types_tokens)
-        parameters.append(self.require(self.lexer.var_tokens.keys()))
+            self._require(self._variable_types)
+        parameters.append(self._require(self._variables))
 
-        comma = self.match([','])
+        comma = self._match([','])
         while comma:
             if types:
-                self.require(self.lexer.var_types_tokens)
-            parameters.append(self.require(self.lexer.var_tokens.keys()))
-            comma = self.match([','])
+                self._require(self._variable_types)
+            parameters.append(self._require(self._variables))
+            comma = self._match([','])
 
         return parameters
 
-    def parse_function(self, function_token):
-        self.require(['('])
-        parameters = self.parse_function_parameters(True)
-        self.require([')'])
+    def _parse_function(self, function_token):
+        self._require(['('])
+        parameters = self._parse_function_parameters(types=True)
+        self._require([')'])
 
-        self.require(['{'])
-        body = self.parse_code()
-        self.require(['}'])
+        self._require(['{'])
+        body = self.parse_block()
+        self._require(['}'])
 
         return FunctionNode(function_token, parameters, body)
 
-    def parse_function_call(self, function_token):
-        self.require(['('])
-        parameters = self.parse_function_parameters()
-        self.require([')'])
-        self.require([';'])
+    def _parse_function_call(self, function_token):
+        self._require(['('])
+        parameters = self._parse_function_parameters()
+        self._require([')'])
+        self._require([';'])
 
         return FunctionCallNode(function_token, parameters)
 
-    def parse_switch(self):
-        self.require(['('])
-        variable = self.require(self.lexer.var_tokens.keys())
-        self.require([')'])
+    def _parse_switch(self):
+        self._require(['('])
+        variable = self._require(self._variables)
+        self._require([')'])
 
-        self.require(['{'])
-        body = self.parse_code()
-        self.require(['}'])
+        self._require(['{'])
+        body = self.parse_block()
+        self._require(['}'])
 
         return SwitchNode(variable, body)
 
-    def parse_case(self):
-        constant = self.parse_variable_or_constant()
-        self.require([':'])
+    def _parse_case(self):
+        constant = self._parse_variable_or_constant()
+        self._require([':'])
 
         return CaseNode(constant.constant)
 
-    def parse_key_word(self, key_word):
-        self.require([':'] if key_word.word == 'default' else [';'])
+    def _parse_key_word(self, key_word):
+        self._require([':'] if key_word.word == 'default' else [';'])
+
         return KeyWordNode(key_word)
 
-    def parse_ignored_keywords(self, key_word):
+    def _parse_ignored_keywords(self, key_word):
         if key_word.word == '#include':
-            self.require(libs)
+            self._require(libs)
         elif key_word.word == 'using':
-            self.require(['namespace'])
-            self.require(namespaces)
-            self.require([';'])
+            self._require(['namespace'])
+            self._require(namespaces)
+            self._require([';'])
+
         return None
 
-    def parse_expression(self) -> Node:
-        if self.match(self.lexer.var_tokens.keys()):
-            self.position -= 1  # current position is variable
-            var_node = self.parse_variable_or_constant()
+    def _parse_return(self):
+        statement = self._parse_formula()
+        self._require([';'])
 
-            operation = self.match(all_operators)
-            if operation:
-                # unary and array processing
-                right_formula_node = self.parse_formula()
-                self.require([';'])
-                return BinaryOperationNode(operation, var_node, right_formula_node)
+        return ReturnNode(statement)
 
-        if self.match(self.lexer.var_types_tokens):
-            variable_token = self.match(self.lexer.var_tokens.keys())
-            if variable_token:
-                return self.parse_variable_definition(variable_token)
-
-            function_token = self.match(self.lexer.func_tokens.keys())
-            if function_token:
-                return self.parse_function(function_token)
-
-            raise Exception(f'Expected variable or function after {self.get_prev()}')
-
-        function_token = self.match(self.lexer.func_tokens.keys())
-        if function_token:
-            return self.parse_function_call(function_token)
-
-        key_word = self.match(self.lexer.key_word_tokens)
+    def _parse_expression(self) -> Node:
+        key_word = self._match(self._key_words)
         if key_word:
             if key_word.word in ignore:
-                return self.parse_ignored_keywords(key_word)
+                return self._parse_ignored_keywords(key_word)
             elif key_word.word == 'case':
-                return self.parse_case()
+                return self._parse_case()
             elif key_word.word == 'default':
-                return self.parse_key_word(key_word)
+                return self._parse_key_word(key_word)
             elif key_word.word == 'cin':
-                return self.parse_cin()
+                return self._parse_cin()
             elif key_word.word == 'cout':
-                return self.parse_cout()
+                return self._parse_cout()
             elif key_word.word == 'for':
-                return self.parse_for()
+                return self._parse_for()
             elif key_word.word == 'if':
-                return self.parse_if_else_condition()
+                return self._parse_if_else_condition()
             elif key_word.word == 'switch':
-                return self.parse_switch()
+                return self._parse_switch()
             elif key_word.word == 'continue':
-                return self.parse_key_word(key_word)
+                return self._parse_key_word(key_word)
             elif key_word.word == 'break':
-                return self.parse_key_word(key_word)
+                return self._parse_key_word(key_word)
             elif key_word.word == 'while':
-                return self.parse_while()
+                return self._parse_while()
+            elif key_word.word == 'return':
+                return self._parse_return()
 
-    def parse_code(self) -> Node:  # block parse
+        if self._match(self._variables):
+            self._position -= 1  # current position is variable
+            var_node = self._parse_variable_or_constant()
+
+            operation = self._match(all_operators)
+            if operation:
+                # unary and array processing
+                right_formula_node = self._parse_formula()
+                self._require([';'])
+                return BinaryOperationNode(operation, var_node, right_formula_node)
+
+        function_token = self._match(self._functions)
+        if function_token:
+            return self._parse_function_call(function_token)
+
+        if self._match(self._variable_types):
+            variable_token = self._match(self._variables)
+            if variable_token:
+                return self._parse_variable_definition(variable_token)
+
+            function_token = self._match(self._functions)
+            if function_token:
+                return self._parse_function(function_token)
+
+            raise Exception(f'Expected variable or function after {self._get_prev()}')
+
+    def parse_block(self) -> Node:  # block parse
         root = StatementsNode()
-        while self.position < len(self.tokens):
-            if self.match(['}']):
-                self.position -= 1
+        while self._position < len(self._tokens):
+            if self._match(['}']):
+                self._position -= 1
+
                 return root
-            code_string_node = self.parse_expression()
+
+            code_string_node = self._parse_expression()
             if code_string_node:
                 if isinstance(code_string_node, list):
                     for node in code_string_node:

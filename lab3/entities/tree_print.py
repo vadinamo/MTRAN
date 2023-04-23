@@ -26,7 +26,7 @@ def get_tree_list(node):
     elif isinstance(node, ConstantNode):
         tree.append(node.constant.word)
     elif isinstance(node, KeyWordNode):
-        tree.append([node.word.word])
+        tree.append(node.word.word)
     elif isinstance(node, CinNode):
         tree.append('cin')
         result = []
@@ -76,6 +76,9 @@ def get_tree_list(node):
         tree.append(get_tree_list(node.sizes))
     elif isinstance(node, Array):
         tree.append(get_tree_list(node.elements))
+    elif isinstance(node, ReturnNode):
+        tree.append('return')
+        tree.append([get_tree_list(node.statement)])
 
     if len(tree) == 0 or len(tree) > 1:
         return tree

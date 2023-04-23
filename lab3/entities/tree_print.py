@@ -74,7 +74,7 @@ def get_tree_list(node):
         tree.append(node.variable.variable.word)
         tree.append('size:')
         tree.append(get_tree_list(node.sizes))
-        tree.append('elements:')
+    elif isinstance(node, Array):
         tree.append(get_tree_list(node.elements))
 
     if len(tree) == 0 or len(tree) > 1:

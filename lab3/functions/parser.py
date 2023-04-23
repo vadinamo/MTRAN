@@ -36,7 +36,16 @@ class Parser:
 
         var = self.match(self.lexer.var_tokens.keys())
         if var:
-            return VariableNode(var)
+            var = VariableNode(var)
+            bracket = self.match(['['])
+            while bracket:
+                index = self.parse_formula()
+                var = BinaryOperationNode(bracket, var, index)
+                self.require([']'])
+
+                bracket = self.match(['['])
+
+            return var
 
         constant = self.tokens[self.position]
         if constant.word == 'true' or constant.word == 'false':
@@ -76,14 +85,14 @@ class Parser:
 
         return left_node
 
-    def parse_array_elements(self):
+    def parse_array(self):
         self.require(['{'])
 
         result = []
         while True:
             if self.match(['{']):
                 self.position -= 1
-                result.append(self.parse_array_elements())
+                result.append(self.parse_array())
             else:
                 result.append(self.parse_formula())
 
@@ -114,13 +123,14 @@ class Parser:
             elif s.word == '=':
                 if not isinstance(var, VariableNode):
                     raise Exception(f'Variable {var.variable.variable.word} was declared as an array')
+
                 result.append(BinaryOperationNode(Token('=', 'OPERATION'), var, self.parse_formula()))
             elif s.word == '{':
                 if not isinstance(var, ArrayDefinition):
                     raise Exception(f'Variable {var.variable.word} was not declared as an array')
 
                 self.position -= 1
-                result[-1].elements = self.parse_array_elements()
+                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result[-1], Array(self.parse_array())))
             elif s.word == ';':
                 return result
 

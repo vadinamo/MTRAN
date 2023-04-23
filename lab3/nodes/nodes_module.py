@@ -1,4 +1,4 @@
-from nodes.array_index import *
+from nodes.array import *
 from nodes.array_definition import *
 from nodes.binary_operation_node import *
 from nodes.case_node import *

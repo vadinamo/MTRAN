@@ -39,12 +39,9 @@ class Parser:
         if constant:
             return ConstantNode(constant)
 
-        constant = self._match(booleans + ['!'])
-        if constant:
-            if constant.word in booleans:
-                return ConstantNode(constant)
-            elif constant.word == '!':
-                return UnaryOperationNode(constant, self._parse_formula())
+        bool_not = self._match(['!'])
+        if bool_not:
+            return UnaryOperationNode(bool_not, self._parse_formula())
 
         var = self._match(self._variables)
         if var:
@@ -134,7 +131,7 @@ class Parser:
                     raise Exception(f'Variable {var.variable.word} was not declared as an array')
 
                 self._position -= 1
-                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result[-1], Array(self._parse_array())))
+                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result.pop(), Array(self._parse_array())))
             elif s.word == ';':
                 return result
 

@@ -4,7 +4,7 @@ namespaces = ['std']
 ignore = ['#include', 'using', 'namespace'] + libs + namespaces
 booleans = ['true', 'false']
 key_words = ['for', 'while', 'continue', 'break', 'if', 'else', 'switch', 'case', 'return', 'cin', 'cout', 'endl',
-             'default', 'new'] + ignore + booleans
+             'default', 'new'] + ignore
 operators = ['+', '-', '*', '/', '%', '=', '<', '>', '&', '|', '!', '?']
 possible_operators = ['==', '!=', '+=', '-=', '*=', '/=', '<<', '>>', '&&', '||', '++', '--']
 separators = [';', '{', '}', '(', ')', '[', ']', ',', ':']

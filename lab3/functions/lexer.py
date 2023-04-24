@@ -84,6 +84,10 @@ class Lexer:
                     self.key_word_tokens.append(current)
                     self.tokens.append(Token(current, 'KEY WORD'))
                     current = ''
+                elif current in booleans:
+                    self.constants_tokens[current] = 'BOOLEAN CONSTANT'
+                    self.tokens.append(Token(current, 'BOOLEAN CONSTANT'))
+                    current = ''
                 elif (s == '<' or s == '>') and self.tokens[-1].word == '#include':
                     current += s
                 elif len(current) > 0 and current[0] == '"' and current[-1] == '"':

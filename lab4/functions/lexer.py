@@ -125,7 +125,11 @@ class Lexer:
                                 f'[{row}]: {self.__get_line(code, row)}\n'
                                 f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                         self.var_tokens[current] = var_type
-                    self.tokens.append(Token(current, f'{self.var_tokens[current].upper()} VARIABLE'))
+
+                    if current in self.var_tokens.keys():
+                        self.tokens.append(Token(current, f'{self.var_tokens[current].upper()} VARIABLE'))
+                    elif current in self.func_tokens.keys():
+                        self.tokens.append(Token(current, f'{self.func_tokens[current].upper()} FUNCTION'))
                     current = ''
 
                 if not char_read and not string_read:

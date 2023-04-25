@@ -108,9 +108,11 @@ class Semantic:
 
             return
         elif isinstance(root, FunctionNode):
-            pass
+            self.analyze(root.body)
+
+            return
         elif isinstance(root, FunctionCallNode):
-            pass
+            return self.get_type(root.name.token_type)
         elif isinstance(root, SwitchNode):
             pass
         elif isinstance(root, CaseNode):
@@ -126,6 +128,6 @@ class Semantic:
 
             return
         elif isinstance(root, ReturnNode):
-            pass
+            return
 
         return root

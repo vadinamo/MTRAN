@@ -240,6 +240,16 @@ class Parser:
         body = self.parse_block()
         self._require(['}'])
 
+        if isinstance(body, StatementsNode) and body.nodes:
+            return_type = function_token.token_type.split(' ')[0]
+            if return_type != 'VOID':
+                if not isinstance(body.nodes[-1], ReturnNode):
+                    raise Exception(f'Function {function_token.word} has type {return_type} but returns nothing')
+            else:
+                if isinstance(body.nodes[-1], ReturnNode):
+                    raise Exception(f'Function {function_token.word} has type {return_type} but has return statement')
+                body.nodes.append(ReturnNode(KeyWordNode(Token('void', 'VOID RETURN TYPE'))))
+
         return FunctionNode(function_token, parameters, body)
 
     def _parse_function_call(self, function_token):
@@ -341,6 +351,9 @@ class Parser:
                 return self._parse_function(function_token)
 
             raise Exception(f'Expected variable or function after {self._get_prev()}')
+
+        if self._match(self._constants):
+            raise Exception(f'Unexpected constant')
 
     def parse_block(self) -> Node:  # block parse
         root = StatementsNode()

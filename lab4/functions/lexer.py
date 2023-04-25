@@ -125,14 +125,14 @@ class Lexer:
                                 f'[{row}]: {self.__get_line(code, row)}\n'
                                 f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                         self.var_tokens[current] = var_type
-                    self.tokens.append(Token(current, 'VARIABLE'))
+                    self.tokens.append(Token(current, f'{var_type.upper()} VARIABLE'))
                     current = ''
 
                 if not char_read and not string_read:
                     if not self.is_control_character(s) and s != ' ':
                         if s in separators:
                             if s == '(' and len(self.tokens) > 0 and self.tokens[-1].word in self.var_tokens.keys():
-                                self.tokens[-1].token_type = 'FUNCTION'
+                                self.tokens[-1].token_type = self.tokens[-1].token_type.split(' ')[0] + ' FUNCTION'
                                 self.func_tokens[self.tokens[-1].word] = self.var_tokens[self.tokens[-1].word]
                                 del self.var_tokens[self.tokens[-1].word]
                             self.tokens.append(Token(s, 'SEPARATOR'))

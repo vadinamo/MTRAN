@@ -1,4 +1,4 @@
-var_types = ['bool', 'char', 'int', 'float', 'double', 'string', 'void']
+var_types = ['bool', 'char', 'int', 'float', 'string', 'void']
 libs = ['<iostream>']
 namespaces = ['std']
 ignore = ['#include', 'using', 'namespace'] + libs + namespaces

@@ -18,6 +18,8 @@ class Semantic:
         return first_type in numeric and second_type in numeric
 
     def analyze(self, root):
+        if root is None:
+            return None
         if isinstance(root, Token):
             return self.get_type(root.token_type)
         elif isinstance(root, list):
@@ -63,7 +65,6 @@ class Semantic:
                 raise Exception('Only || or && available for BOOLEAN values')
             elif left[0] != right[0]:
                 raise Exception(f'Cannot solve {left[0]} and {right[0]} types')
-
             elif self.is_numeric(left[0], right[0]):
                 return left[0], left[1]
 
@@ -81,13 +82,21 @@ class Semantic:
             self.analyze(root.expression)
             return
         elif isinstance(root, WhileNode):
-            condition = self.analyze(root.condition)
-            if condition[0] != 'BOOLEAN':
+            if root.condition and self.analyze(root.condition)[0] != 'BOOLEAN':
                 raise Exception('while condition is not correct')
             self.analyze(root.body)
             return
         elif isinstance(root, ForNode):
-            pass
+            if root.begin:
+                begin = self.analyze(root.begin)
+
+            if root.condition:
+                condition = self.analyze(root.condition)
+                if self.analyze(root.condition)[0] != 'BOOLEAN':
+                    raise Exception('for condition is not correct')
+
+            if root.step:
+                step = self.analyze(root.step)
         elif isinstance(root, IfNode):
             pass
         elif isinstance(root, FunctionNode):

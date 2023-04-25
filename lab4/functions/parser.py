@@ -34,6 +34,9 @@ class Parser:
 
         return token
 
+    def _pick(self):
+        return self._tokens[self._position].word
+
     def _parse_variable_or_constant(self) -> Node:
         constant = self._match(self._constants)
         if constant:
@@ -161,7 +164,9 @@ class Parser:
 
     def _parse_while(self):
         self._require(['('])
-        condition = self._parse_formula()
+        condition = None
+        if self._pick() != ')':
+            condition = self._parse_formula()
         self._require([')'])
 
         self._require(['{'])
@@ -172,14 +177,18 @@ class Parser:
 
     def _parse_for(self):
         self._require(['('])
-        self._match(self._variable_types)
-        begin = self._parse_formula()
+        begin = condition = step = None
+        if self._pick() != ';':
+            self._match(self._variable_types)
+            begin = self._parse_formula()
         self._require([';'])
 
-        condition = self._parse_formula()
+        if self._pick() != ';':
+            condition = self._parse_formula()
         self._require([';'])
 
-        step = self._parse_formula()
+        if self._pick() != ')':
+            step = self._parse_formula()
         self._require([')'])
 
         self._require(['{'])

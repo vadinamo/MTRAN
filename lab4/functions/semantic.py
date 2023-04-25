@@ -83,7 +83,7 @@ class Semantic:
             return
         elif isinstance(root, WhileNode):
             if root.condition and self.analyze(root.condition)[0] != 'BOOLEAN':
-                raise Exception('while condition is not correct')
+                raise Exception('Invalid WHILE condition')
             self.analyze(root.body)
             return
         elif isinstance(root, ForNode):
@@ -93,12 +93,20 @@ class Semantic:
             if root.condition:
                 condition = self.analyze(root.condition)
                 if self.analyze(root.condition)[0] != 'BOOLEAN':
-                    raise Exception('for condition is not correct')
+                    raise Exception('Invalid FOR condition')
 
             if root.step:
                 step = self.analyze(root.step)
+            self.analyze(root.body)
+
+            return
         elif isinstance(root, IfNode):
-            pass
+            if self.analyze(root.condition)[0] != 'BOOLEAN':
+                raise Exception('Invalid IF condition')
+            self.analyze(root.body)
+            self.analyze(root.else_condition)
+
+            return
         elif isinstance(root, FunctionNode):
             pass
         elif isinstance(root, FunctionCallNode):

@@ -72,9 +72,48 @@ class Translator:
         elif isinstance(node, WhileNode):
             result = '\t' * depth + f'while({self._create_code(node.condition)}):\n'
             result += self._create_code(node.body, depth + 1)
+
             return result
         elif isinstance(node, ForNode):
-            pass
+            if not node.begin:
+                result = '\t' * depth + f'while(True):\n'
+                result += self._create_code(node.body, depth + 1)
+
+                return result
+
+            if isinstance(node.begin, BinaryOperationNode):
+                variable = f'{node.begin.left_node.variable.word}'
+                begin = node.begin.right_node.constant.word
+            else:
+                raise Exception('Invalid FOR variable define')
+
+            if isinstance(node.condition, BinaryOperationNode):
+                operation = node.condition.operation.word
+                end = self._create_code(node.condition.right_node)
+                if operation == '<':
+                    loop_range = f'{begin}, {end}'
+                elif operation == '<=':
+                    loop_range = f'{begin}, {end} + 1'
+                elif operation == '>':
+                    loop_range = f'{end}, {begin}'
+                elif operation == '>=':
+                    loop_range = f'{end}, {begin} - 1'
+                else:
+                    raise Exception('Invalid FOR condition define')
+            else:
+                raise Exception('Invalid FOR condition define')
+
+            if isinstance(node.step, UnaryOperationNode):
+                step = '-1' if node.step.operation.word == '--' else '1'
+            elif isinstance(node.step, BinaryOperationNode) and node.step.operation == '+=':
+                step = self._create_code(node.step.right_node)
+            elif isinstance(node.step, BinaryOperationNode) and node.step.operation == '-=':
+                step = f'-{self._create_code(node.step.right_node)}'
+            else:
+                raise Exception('Invalid FOR step define')
+
+            return f'for {variable} in range({loop_range}, {step}):\n' + self._create_code(node.body, depth+1)
+
         elif isinstance(node, IfNode):
             pass
         elif isinstance(node, FunctionNode):

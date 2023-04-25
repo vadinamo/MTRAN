@@ -14,20 +14,20 @@ class Semantic:
         return None
 
     def is_numeric(self, first_type, second_type='INT'):
-        return first_type == 'INT' and second_type == 'FLOAT' or first_type == 'FLOAT' and \
-            second_type == 'INT' or first_type == 'INT' and second_type == 'INT' or \
-            first_type == 'FLOAT' and second_type == 'FLOAT'
+        numeric = ['INT', 'FLOAT']
+        return first_type in numeric and second_type in numeric
 
     def analyze(self, root):
         if isinstance(root, Token):
             return self.get_type(root.token_type)
         elif isinstance(root, list):
-            pass
+            for element in root:
+                self.analyze(element)
+            return
         elif isinstance(root, StatementsNode):
-            result = []
             for node in root.nodes:
-                result.append(self.analyze(node))
-            return result
+                self.analyze(node)
+            return
         elif isinstance(root, UnaryOperationNode):
             left = root.node
             operation = root.operation
@@ -40,26 +40,32 @@ class Semantic:
                         raise Exception('++ and -- available only for numeric variables')
 
                     return left_type[0], left_type[1]
+            elif operation.word == '!':
+                left = self.analyze(left)
+                if left[0] != 'BOOLEAN':
+                    raise Exception('Cannot use ! operator with non BOOLEAN condition')
 
+                return ['BOOLEAN', 'STATEMENT']
         elif isinstance(root, BinaryOperationNode):
             left = self.analyze(root.left_node)
             right = self.analyze(root.right_node)
             operation = root.operation.word
 
-            if self.is_numeric(left[0], right[0]):
-                return left[0], left[1]
+            if operation in logical_operators:
+                return ['BOOLEAN', 'STATEMENT']
             elif left[0] == 'STRING' and right[0] == 'STRING':
-                if operation == '+':
+                if operation in string_operators:
                     return left[0], left[1]
-
                 raise Exception('Only + available for STRING values')
             elif left[0] == 'BOOLEAN' and right[0] == 'BOOLEAN':
                 if operation == '||' and operation == '&&':
                     return left[0], left[1]
-
                 raise Exception('Only || or && available for BOOLEAN values')
             elif left[0] != right[0]:
                 raise Exception(f'Cannot solve {left[0]} and {right[0]} types')
+
+            elif self.is_numeric(left[0], right[0]):
+                return left[0], left[1]
 
             return left[0], left[1]
         elif isinstance(root, VariableNode):
@@ -67,13 +73,19 @@ class Semantic:
         elif isinstance(root, ConstantNode):
             return self.analyze(root.constant)
         elif isinstance(root, KeyWordNode):
-            pass
+            return
         elif isinstance(root, CinNode):
-            pass
+            self.analyze(root.expression)
+            return
         elif isinstance(root, CoutNode):
-            pass
+            self.analyze(root.expression)
+            return
         elif isinstance(root, WhileNode):
-            pass
+            condition = self.analyze(root.condition)
+            if condition[0] != 'BOOLEAN':
+                raise Exception('while condition is not correct')
+            self.analyze(root.body)
+            return
         elif isinstance(root, ForNode):
             pass
         elif isinstance(root, IfNode):

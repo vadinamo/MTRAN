@@ -8,6 +8,7 @@ key_words = ['for', 'while', 'continue', 'break', 'if', 'else', 'switch', 'case'
 
 operators = ['+', '-', '*', '/', '%', '=', '<', '>', '&', '|', '!', '?']
 possible_operators = ['==', '!=', '+=', '-=', '*=', '/=', '<<', '>>', '&&', '||', '++', '--']
+string_operators = ['==', '!=', '+=', '=']
 unary_operators = ['++', '--']
 all_operators = operators + possible_operators
 

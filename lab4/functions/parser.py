@@ -42,7 +42,6 @@ class Parser:
         bool_not = self._match(['!'])
         if bool_not:
             return UnaryOperationNode(bool_not, self._parse_formula())
-
         var = self._match(self._variables)
         if var:
             var = VariableNode(var)
@@ -56,7 +55,6 @@ class Parser:
                 bracket = self._match(['['])
 
             return var
-
         raise Exception(f'Expected number or variable after  {self._get_prev()}')
 
     def _parse_parentheses(self) -> Node:
@@ -332,7 +330,9 @@ class Parser:
 
             operation = self._match(all_operators)
             if operation:
-                # unary and array processing
+                if operation.word in unary_operators:
+                    self._require([';'])
+                    return UnaryOperationNode(operation, var_node)
                 right_formula_node = self._parse_formula()
                 self._require([';'])
                 return BinaryOperationNode(operation, var_node, right_formula_node)

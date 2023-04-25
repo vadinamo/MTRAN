@@ -13,7 +13,7 @@ class Semantic:
 
         return None
 
-    def is_numeric(self, first_type, second_type):
+    def is_numeric(self, first_type, second_type='INT'):
         return first_type == 'INT' and second_type == 'FLOAT' or first_type == 'FLOAT' and \
             second_type == 'INT' or first_type == 'INT' and second_type == 'INT' or \
             first_type == 'FLOAT' and second_type == 'FLOAT'
@@ -24,10 +24,23 @@ class Semantic:
         elif isinstance(root, list):
             pass
         elif isinstance(root, StatementsNode):
+            result = []
             for node in root.nodes:
-                return self.analyze(node)
+                result.append(self.analyze(node))
+            return result
         elif isinstance(root, UnaryOperationNode):
-            pass
+            left = root.node
+            operation = root.operation
+            if operation.word in unary_operators:
+                if not isinstance(left, VariableNode):
+                    raise Exception('++ and -- available only for variables')
+                else:
+                    left_type = self.get_type(left.variable.token_type)
+                    if not self.is_numeric(left_type[0]):
+                        raise Exception('++ and -- available only for numeric variables')
+
+                    return left_type[0], left_type[1]
+
         elif isinstance(root, BinaryOperationNode):
             left = self.analyze(root.left_node)
             right = self.analyze(root.right_node)
@@ -49,7 +62,6 @@ class Semantic:
                 raise Exception(f'Cannot solve {left[0]} and {right[0]} types')
 
             return left[0], left[1]
-
         elif isinstance(root, VariableNode):
             return self.analyze(root.variable)
         elif isinstance(root, ConstantNode):

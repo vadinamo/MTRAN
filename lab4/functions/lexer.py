@@ -48,7 +48,7 @@ class Lexer:
         return not (self.is_int(number_str) or (number_str[0] == '-' and self.is_int(number_str[1:])))
 
     def is_signed(self, space):
-        return not space and len(self.tokens) > 0 and (self.tokens[-1].word == '+' or self.tokens[-1].word == '-')
+        return not space and len(self.tokens) > 0 and (self.tokens[-1].word == '-')
 
     @staticmethod
     def __get_line(code, row):
@@ -125,7 +125,7 @@ class Lexer:
                                 f'[{row}]: {self.__get_line(code, row)}\n'
                                 f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                         self.var_tokens[current] = var_type
-                    self.tokens.append(Token(current, f'{var_type.upper()} VARIABLE'))
+                    self.tokens.append(Token(current, f'{self.var_tokens[current].upper()} VARIABLE'))
                     current = ''
 
                 if not char_read and not string_read:

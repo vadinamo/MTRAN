@@ -116,9 +116,15 @@ class Semantic:
         elif isinstance(root, CaseNode):
             pass
         elif isinstance(root, ArrayDefinition):
-            pass
+            for size in root.sizes:
+                if self.analyze(size)[0] != 'INT':
+                    raise Exception('Only INT can be array size')
+
+            return
         elif isinstance(root, Array):
-            pass
+            self.analyze(root.elements)
+
+            return
         elif isinstance(root, ReturnNode):
             pass
 

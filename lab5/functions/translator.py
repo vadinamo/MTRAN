@@ -20,6 +20,7 @@ class Translator:
         semantic = Semantic()
         semantic.analyze(tree)
 
+        printer.print_code(self._create_code(tree))
         self.tree = tree
         self.execute()
 
@@ -31,7 +32,7 @@ class Translator:
             for entity in node.nodes:
                 result += depth * '\t' + f'{self._create_code(entity)}\n'
 
-            return result
+            return result[:-1]
         elif isinstance(node, UnaryOperationNode):
             pass
         elif isinstance(node, BinaryOperationNode):
@@ -54,11 +55,14 @@ class Translator:
                 return '"\\n"'
         elif isinstance(node, CinNode):
             expression = f'{self._create_code(node.expression[0])}'
+            data_type = node.expression[0].variable.token_type.split()[0].lower()
+            inputs = 'input()' if data_type != 'int' and data_type != 'float' else f'{data_type}(input())'
             for var in node.expression[1:]:
                 expression += f', {self._create_code(var)}'
+                data_type = var.variable.token_type.split()[0].lower()
+                inputs += ', input()' if data_type != 'int' and data_type != 'float' else f', {data_type}(input())'
 
-            expression += (' =' + ' input(),' * len(node.expression))[:-1]
-            return expression
+            return expression + ' = ' + inputs
         elif isinstance(node, CoutNode):
             expression = f'print({self._create_code(node.expression[0])}'
             for val in node.expression[1:]:
@@ -66,7 +70,9 @@ class Translator:
 
             return expression + ')'
         elif isinstance(node, WhileNode):
-            pass
+            result = '\t' * depth + f'while({self._create_code(node.condition)}):\n'
+            result += self._create_code(node.body, depth + 1)
+            return result
         elif isinstance(node, ForNode):
             pass
         elif isinstance(node, IfNode):

@@ -112,3 +112,8 @@ class PrintClass:
         self._print_name('ABSTRACT SYNTAX TREE')
         self._print_node(self._get_tree_list(root))
         self._print_name('-' * self.string_length)
+
+    def print_code(self, code):
+        self._print_name('ABSTRACT SYNTAX TREE')
+        print(code)
+        self._print_name('-' * self.string_length)

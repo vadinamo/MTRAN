@@ -26,9 +26,7 @@ class Translator:
     def _create_code(self, node, depth=0):
         if isinstance(node, Token):
             return node.word
-        elif isinstance(node, list):
-            pass
-        elif isinstance(node, StatementsNode):
+        if isinstance(node, StatementsNode):
             result = ''
             for entity in node.nodes:
                 result += depth * '\t' + f'{self._create_code(entity)}\n'
@@ -52,11 +50,21 @@ class Translator:
         elif isinstance(node, ConstantNode):
             return node.constant.word
         elif isinstance(node, KeyWordNode):
-            pass
+            if node.word.word == 'endl':
+                return '"\\n"'
         elif isinstance(node, CinNode):
-            pass
+            expression = f'{self._create_code(node.expression[0])}'
+            for var in node.expression[1:]:
+                expression += f', {self._create_code(var)}'
+
+            expression += (' =' + ' input(),' * len(node.expression))[:-1]
+            return expression
         elif isinstance(node, CoutNode):
-            pass
+            expression = f'print({self._create_code(node.expression[0])}'
+            for val in node.expression[1:]:
+                expression += f', {self._create_code(val)}'
+
+            return expression + ')'
         elif isinstance(node, WhileNode):
             pass
         elif isinstance(node, ForNode):
@@ -79,4 +87,4 @@ class Translator:
             pass
 
     def execute(self):
-        print(self._create_code(self.tree))
+        exec(self._create_code(self.tree))

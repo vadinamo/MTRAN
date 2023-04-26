@@ -36,16 +36,19 @@ class Translator:
         left = self._create_code(node.left_node)
         right = self._create_code(node.right_node)
 
+        if isinstance(node.left_node, BinaryOperationNode) and node.left_node.operation.word != '[':
+            print()
+            left = '(' + left + ')'
+        if isinstance(node.right_node, BinaryOperationNode) and node.right_node.operation.word != '[':
+            right = '(' + right + ')'
+
         operation = node.operation.word
         if operation == '&&':
             operation = 'and'
         elif operation == '||':
             operation = 'or'
-
-        if isinstance(node.left_node, BinaryOperationNode):
-            left = '(' + left + ')'
-        if isinstance(node.right_node, BinaryOperationNode):
-            right = '(' + right + ')'
+        elif operation == '[':
+            return f'{left}[{right}]'
 
         return f'{left} {operation} {right}'
 
@@ -69,7 +72,7 @@ class Translator:
         for val in node.expression[1:]:
             expression += f', {self._create_code(val)}'
 
-        return expression + ')'
+        return expression + ', end="")'
 
     def _translate_while(self, node, depth):
         result = '\t' * depth + f'while({self._create_code(node.condition)}):\n'
@@ -164,6 +167,15 @@ class Translator:
             statement = self._create_code(node.statement)
         return 'return ' + (statement if statement else '')
 
+    def _empy_array(self, shape):
+        if not shape:
+            return None
+
+        if len(shape) == 1:
+            return [0] * int(shape[0].constant.word)
+
+        return [self._empy_array(shape[1:]) for _ in range(int(shape[0].constant.word))]
+
     def _create_code(self, node, depth=0):
         if isinstance(node, Token):
             return node.word
@@ -198,7 +210,7 @@ class Translator:
         elif isinstance(node, CaseNode):
             pass
         elif isinstance(node, ArrayDefinition):
-            pass
+            return f'{node.variable.variable.word} = {self._empy_array(node.sizes)}'
         elif isinstance(node, Array):
             pass
         elif isinstance(node, ReturnNode):

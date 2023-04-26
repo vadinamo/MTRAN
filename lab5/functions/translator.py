@@ -167,14 +167,21 @@ class Translator:
             statement = self._create_code(node.statement)
         return 'return ' + (statement if statement else '')
 
-    def _empy_array(self, shape):
+    def _empty_array(self, shape):
         if not shape:
             return None
 
         if len(shape) == 1:
             return [0] * int(shape[0].constant.word)
 
-        return [self._empy_array(shape[1:]) for _ in range(int(shape[0].constant.word))]
+        return [self._empty_array(shape[1:]) for _ in range(int(shape[0].constant.word))]
+
+    def _string_array(self, item):
+        if isinstance(item, list):
+            result = ', '.join(self._string_array(i) for i in item)
+            return f'[{result}]'
+        else:
+            return self._create_code(item)
 
     def _create_code(self, node, depth=0):
         if isinstance(node, Token):
@@ -210,9 +217,9 @@ class Translator:
         elif isinstance(node, CaseNode):
             pass
         elif isinstance(node, ArrayDefinition):
-            return f'{node.variable.variable.word} = {self._empy_array(node.sizes)}'
+            return f'{node.variable.variable.word} = {self._empty_array(node.sizes)}'
         elif isinstance(node, Array):
-            pass
+            return self._string_array(node.elements)
         elif isinstance(node, ReturnNode):
             return self._translate_return(node)
 

@@ -136,7 +136,7 @@ class Parser:
                     raise Exception(f'Variable {var.variable.word} was not declared as an array')
 
                 self._position -= 1
-                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result.pop(), Array(self._parse_array())))
+                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result.pop().variable, Array(self._parse_array())))
             elif s.word == ';':
                 return result
 

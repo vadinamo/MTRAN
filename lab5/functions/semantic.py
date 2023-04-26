@@ -14,7 +14,7 @@ class Semantic:
         return None
 
     def is_numeric(self, first_type, second_type='INT'):
-        numeric = ['INT', 'FLOAT']
+        numeric = ['INT', 'FLOAT', 'ARRAY']
         return first_type in numeric and second_type in numeric
 
     def analyze(self, root):
@@ -63,10 +63,10 @@ class Semantic:
                 if operation == '||' and operation == '&&':
                     return left[0], left[1]
                 raise Exception('Only || or && available for BOOLEAN values')
-            elif left[0] != right[0]:
-                raise Exception(f'Cannot solve {left[0]} and {right[0]} types')
             elif self.is_numeric(left[0], right[0]):
                 return left[0], left[1]
+            elif left[0] != right[0]:
+                raise Exception(f'Cannot solve {left[0]} and {right[0]} types')
 
             return left[0], left[1]
         elif isinstance(root, VariableNode):
@@ -122,11 +122,11 @@ class Semantic:
                 if self.analyze(size)[0] != 'INT':
                     raise Exception('Only INT can be array size')
 
-            return
+            return 'ARRAY', 'ARRAY'
         elif isinstance(root, Array):
             self.analyze(root.elements)
 
-            return
+            return 'ARRAY', 'ARRAY'
         elif isinstance(root, ReturnNode):
             return
 

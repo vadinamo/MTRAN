@@ -16,3 +16,5 @@ separators = [';', '{', '}', '(', ')', '[', ']', ',', ':']
 
 logical_operators = ['<', '>', '&&', '||', '==', '!=', '<=', '>=']
 calculation_operators = ['+', '-', '*', '/', '%', '=', '+=', '-=', '*=', '/=']
+
+execute_command = '\n\nmain()'

@@ -14,6 +14,8 @@ class Parser:
         self._variables = lexer.var_tokens.keys()
         self._functions = lexer.func_tokens.keys()
 
+        self._current_function_type = ''
+
     def _match(self, expected: []) -> Token:
         if self._position < len(self._tokens):
             current_token = self._tokens[self._position]
@@ -58,7 +60,9 @@ class Parser:
                 bracket = self._match(['['])
 
             return var
-        raise Exception(f'Expected number or variable after  {self._get_prev()}')
+
+        if self._get_prev() != 'return' and self._current_function_type != 'VOID':
+            raise Exception(f'Expected number or variable after {self._get_prev()}')
 
     def _parse_parentheses(self) -> Node:
         if self._match(['(']):
@@ -254,9 +258,14 @@ class Parser:
                     raise Exception(f'Function {function_token.word} has type {return_type} but returns nothing')
             else:
                 if isinstance(body.nodes[-1], ReturnNode):
-                    raise Exception(f'Function {function_token.word} has type {return_type} but has return statement')
-                body.nodes.append(ReturnNode(KeyWordNode(Token('void', 'VOID RETURN TYPE'))))
+                    if not isinstance(body.nodes[-1].statement, KeyWordNode) and \
+                            body.nodes[-1].statement.word.word != 'void':
+                        raise Exception(f'Function {function_token.word} has type {return_type} but '
+                                        f'has return statement')
+                else:
+                    body.nodes.append(ReturnNode(KeyWordNode(Token('void', 'VOID RETURN TYPE'))))
 
+        self._current_function_type = function_token.token_type.split()[0]
         return FunctionNode(function_token, parameters, body)
 
     def _parse_function_call(self, function_token):
@@ -301,6 +310,8 @@ class Parser:
 
     def _parse_return(self):
         statement = self._parse_formula()
+        if not statement:
+            statement = KeyWordNode(Token('void', 'VOID RETURN TYPE'))
         self._require([';'])
 
         return ReturnNode(statement)

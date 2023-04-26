@@ -3,6 +3,7 @@ from functions.parser import Parser
 from functions.semantic import Semantic
 from entities.print import PrintClass
 from nodes.nodes_module import *
+from entities.constants import execute_command
 
 
 class Translator:
@@ -164,7 +165,13 @@ class Translator:
         elif isinstance(node, IfNode):
             return self._translate_if_condition(node, depth)
         elif isinstance(node, FunctionNode):
-            pass
+            result = f'def {node.name.word}('
+            if node.parameters:
+                for p in node.parameters:
+                    result += f'{self._create_code(p)}, '
+                result = result[:-2]
+            result += '):\n' + self._create_code(node.body, depth + 1)
+            return result
         elif isinstance(node, FunctionCallNode):
             pass
         elif isinstance(node, SwitchNode):
@@ -176,7 +183,11 @@ class Translator:
         elif isinstance(node, Array):
             pass
         elif isinstance(node, ReturnNode):
-            pass
+            if isinstance(node.statement, Token) and node.word == 'void':
+                statement = ''
+            else:
+                statement = self._create_code(node.statement)
+            return 'return ' + (statement if statement else '')
 
     def execute(self):
-        exec(self._create_code(self.tree))
+        exec(self._create_code(self.tree) + execute_command)

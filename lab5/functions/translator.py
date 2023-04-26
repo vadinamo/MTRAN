@@ -139,6 +139,31 @@ class Translator:
             result += f'\n{statement}'
         return result
 
+    def _translate_function(self, node, depth):
+        result = f'def {node.name.word}('
+        if node.parameters:
+            for p in node.parameters:
+                result += f'{self._create_code(p)}, '
+            result = result[:-2]
+        result += '):\n' + self._create_code(node.body, depth + 1)
+        return result
+
+    def _translate_function_call(self, node):
+        result = f'{node.name.word}('
+        if node.parameters:
+            for p in node.parameters:
+                result += f'{self._create_code(p)}, '
+            result = result[:-2]
+        result += ')'
+        return result
+
+    def _translate_return(self, node):
+        if isinstance(node.statement, Token) and node.statement.word == 'void':
+            statement = ''
+        else:
+            statement = self._create_code(node.statement)
+        return 'return ' + (statement if statement else '')
+
     def _create_code(self, node, depth=0):
         if isinstance(node, Token):
             return node.word
@@ -165,15 +190,9 @@ class Translator:
         elif isinstance(node, IfNode):
             return self._translate_if_condition(node, depth)
         elif isinstance(node, FunctionNode):
-            result = f'def {node.name.word}('
-            if node.parameters:
-                for p in node.parameters:
-                    result += f'{self._create_code(p)}, '
-                result = result[:-2]
-            result += '):\n' + self._create_code(node.body, depth + 1)
-            return result
+            return self._translate_function(node, depth)
         elif isinstance(node, FunctionCallNode):
-            pass
+            return self._translate_function_call(node)
         elif isinstance(node, SwitchNode):
             pass
         elif isinstance(node, CaseNode):
@@ -183,11 +202,7 @@ class Translator:
         elif isinstance(node, Array):
             pass
         elif isinstance(node, ReturnNode):
-            if isinstance(node.statement, Token) and node.word == 'void':
-                statement = ''
-            else:
-                statement = self._create_code(node.statement)
-            return 'return ' + (statement if statement else '')
+            return self._translate_return(node)
 
     def execute(self):
         exec(self._create_code(self.tree) + execute_command)

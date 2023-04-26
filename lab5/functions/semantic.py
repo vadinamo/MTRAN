@@ -62,7 +62,7 @@ class Semantic:
             elif left[0] == 'BOOL' and right[0] == 'BOOL':
                 if operation == '||' or operation == '&&' or operation == '=':
                     return left[0], left[1]
-                raise Exception('Only || or && available for BOOL values')
+                raise Exception('Only || or && or = available for BOOL values')
             elif self.is_numeric(left[0], right[0]):
                 return left[0], left[1]
             elif left[0] != right[0]:

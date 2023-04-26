@@ -20,9 +20,9 @@ class Translator:
 
         semantic = Semantic()
         semantic.analyze(tree)
-        self.code = self._create_code(tree)
-        printer.print_code(self.code)
-        self.execute()
+        # self.code = self._create_code(tree)
+        # printer.print_code(self.code)
+        # self.execute()
 
     def _translate_statement(self, node, depth):
         result = ''
@@ -99,9 +99,9 @@ class Translator:
             elif operation == '<=':
                 loop_range = f'{begin}, {end} + 1'
             elif operation == '>':
-                loop_range = f'{end}, {begin}'
+                loop_range = f'{begin}, {end}'
             elif operation == '>=':
-                loop_range = f'{end}, {begin} - 1'
+                loop_range = f'{begin}, {end} - 1'
             else:
                 raise Exception('Invalid FOR condition define')
         else:

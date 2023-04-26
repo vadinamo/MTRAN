@@ -4,7 +4,7 @@ from math import ceil, floor
 
 class PrintClass:
     def __init__(self):
-        self.string_length = 40
+        self.string_length = 50
 
     def _print_name(self, name):
         length = self.string_length - len(name)

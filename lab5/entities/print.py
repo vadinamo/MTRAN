@@ -114,6 +114,6 @@ class PrintClass:
         self._print_name('-' * self.string_length)
 
     def print_code(self, code):
-        self._print_name('ABSTRACT SYNTAX TREE')
+        self._print_name('TRANSLATED CODE')
         print(code)
         self._print_name('-' * self.string_length)

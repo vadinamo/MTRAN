@@ -75,14 +75,14 @@ class Translator:
         return expression + ', end="")'
 
     def _translate_while(self, node, depth):
-        result = '\t' * depth + f'while({self._create_code(node.condition)}):\n'
+        result = f'while {self._create_code(node.condition)}:\n'
         result += self._create_code(node.body, depth + 1)
 
         return result
 
     def _translate_for(self, node, depth):
         if not node.begin:
-            result = '\t' * depth + f'while(True):\n'
+            result = f'while(True):\n'
             result += self._create_code(node.body, depth + 1)
 
             return result
@@ -189,13 +189,17 @@ class Translator:
         if isinstance(node, StatementsNode):
             return self._translate_statement(node, depth)
         elif isinstance(node, UnaryOperationNode):
-            pass
+            if node.operation.word == '!':
+                return f'not {self._create_code(node.node)}'
         elif isinstance(node, BinaryOperationNode):
             return self._translate_binary_operation(node)
         elif isinstance(node, VariableNode):
             return node.variable.word
         elif isinstance(node, ConstantNode):
-            return node.constant.word
+            constant = node.constant
+            if constant.token_type == 'BOOL CONSTANT':
+                return constant.word[0].upper() + constant.word[1:]
+            return constant.word
         elif isinstance(node, KeyWordNode):
             return self._translate_key_word(node)
         elif isinstance(node, CinNode):

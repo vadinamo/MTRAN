@@ -44,25 +44,25 @@ class Semantic:
                     return left_type[0], left_type[1]
             elif operation.word == '!':
                 left = self.analyze(left)
-                if left[0] != 'BOOLEAN':
-                    raise Exception('Cannot use ! operator with non BOOLEAN condition')
+                if left[0] != 'BOOL':
+                    raise Exception('Cannot use ! operator with non BOOL condition')
 
-                return ['BOOLEAN', 'STATEMENT']
+                return ['BOOL', 'STATEMENT']
         elif isinstance(root, BinaryOperationNode):
             left = self.analyze(root.left_node)
             right = self.analyze(root.right_node)
             operation = root.operation.word
 
             if operation in logical_operators:
-                return ['BOOLEAN', 'STATEMENT']
+                return ['BOOL', 'STATEMENT']
             elif left[0] == 'STRING' and right[0] == 'STRING':
                 if operation in string_operators:
                     return left[0], left[1]
                 raise Exception('Only + available for STRING values')
-            elif left[0] == 'BOOLEAN' and right[0] == 'BOOLEAN':
-                if operation == '||' and operation == '&&':
+            elif left[0] == 'BOOL' and right[0] == 'BOOL':
+                if operation == '||' or operation == '&&' or operation == '=':
                     return left[0], left[1]
-                raise Exception('Only || or && available for BOOLEAN values')
+                raise Exception('Only || or && available for BOOL values')
             elif self.is_numeric(left[0], right[0]):
                 return left[0], left[1]
             elif left[0] != right[0]:
@@ -82,7 +82,7 @@ class Semantic:
             self.analyze(root.expression)
             return
         elif isinstance(root, WhileNode):
-            if root.condition and self.analyze(root.condition)[0] != 'BOOLEAN':
+            if root.condition and self.analyze(root.condition)[0] != 'BOOL':
                 raise Exception('Invalid WHILE condition')
             self.analyze(root.body)
             return
@@ -92,7 +92,7 @@ class Semantic:
 
             if root.condition:
                 condition = self.analyze(root.condition)
-                if self.analyze(root.condition)[0] != 'BOOLEAN':
+                if self.analyze(root.condition)[0] != 'BOOL':
                     raise Exception('Invalid FOR condition')
 
             if root.step:
@@ -101,7 +101,7 @@ class Semantic:
 
             return
         elif isinstance(root, IfNode):
-            if self.analyze(root.condition)[0] != 'BOOLEAN':
+            if self.analyze(root.condition)[0] != 'BOOL':
                 raise Exception('Invalid IF condition')
             self.analyze(root.body)
             self.analyze(root.else_condition)

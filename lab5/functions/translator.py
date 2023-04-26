@@ -3,7 +3,7 @@ from functions.parser import Parser
 from functions.semantic import Semantic
 from entities.print import PrintClass
 from nodes.nodes_module import *
-from entities.constants import execute_command
+from entities.constants import execute_command, unary_operators
 
 
 class Translator:
@@ -20,9 +20,8 @@ class Translator:
 
         semantic = Semantic()
         semantic.analyze(tree)
-
-        printer.print_code(self._create_code(tree))
-        self.tree = tree
+        self.code = self._create_code(tree)
+        printer.print_code(self.code)
         self.execute()
 
     def _translate_statement(self, node, depth):
@@ -37,7 +36,6 @@ class Translator:
         right = self._create_code(node.right_node)
 
         if isinstance(node.left_node, BinaryOperationNode) and node.left_node.operation.word != '[':
-            print()
             left = '(' + left + ')'
         if isinstance(node.right_node, BinaryOperationNode) and node.right_node.operation.word != '[':
             right = '(' + right + ')'
@@ -191,6 +189,10 @@ class Translator:
         elif isinstance(node, UnaryOperationNode):
             if node.operation.word == '!':
                 return f'not {self._create_code(node.node)}'
+            elif node.operation.word in unary_operators:
+                node.operation.word = '+=' if node.operation.word == '++' else '-='
+                return self._create_code(
+                    BinaryOperationNode(node.operation, node.node, ConstantNode(Token('1', 'INT CONSTANT'))))
         elif isinstance(node, BinaryOperationNode):
             return self._translate_binary_operation(node)
         elif isinstance(node, VariableNode):
@@ -228,4 +230,4 @@ class Translator:
             return self._translate_return(node)
 
     def execute(self):
-        exec(self._create_code(self.tree) + execute_command)
+        exec(self.code + execute_command)

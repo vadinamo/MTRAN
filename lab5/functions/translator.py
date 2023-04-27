@@ -20,9 +20,10 @@ class Translator:
 
         semantic = Semantic()
         semantic.analyze(tree)
-        # self.code = self._create_code(tree)
-        # printer.print_code(self.code)
-        # self.execute()
+        self.code = self._create_code(tree)
+        printer.print_code(self.code)
+        printer._print_name('CODE EXECUTE')
+        self.execute()
 
     def _translate_statement(self, node, depth):
         result = ''
@@ -230,4 +231,4 @@ class Translator:
             return self._translate_return(node)
 
     def execute(self):
-        exec(self.code + execute_command)
+        exec(self.code + execute_command, locals())

@@ -9,10 +9,10 @@ class Parser:
         self._position = 0
 
         self._key_words = lexer.key_word_tokens
-        self._constants = lexer.constants_tokens.keys()
+        self._constants = list(lexer.constants_tokens.keys())
         self._variable_types = lexer.var_types_tokens
-        self._variables = lexer.var_tokens.keys()
-        self._functions = lexer.func_tokens.keys()
+        self._variables = list(lexer.var_tokens.keys())
+        self._functions = list(lexer.func_tokens.keys())
 
         self._current_function_type = ''
 
@@ -47,6 +47,7 @@ class Parser:
         bool_not = self._match(['!'])
         if bool_not:
             return UnaryOperationNode(bool_not, self._parse_formula())
+
         var = self._match(self._variables)
         if var:
             var = VariableNode(var)
@@ -60,6 +61,10 @@ class Parser:
                 bracket = self._match(['['])
 
             return var
+
+        func = self._match(self._functions)
+        if func:
+            return self._parse_function_call(func)
 
         if self._get_prev() != 'return' and self._current_function_type != 'VOID':
             raise Exception(f'Expected number or variable after {self._get_prev()}')
@@ -131,6 +136,7 @@ class Parser:
                     raise Exception(f'Variable {var.variable.variable.word} was declared as an array')
 
                 result.append(BinaryOperationNode(Token('=', 'OPERATION'), var, self._parse_formula()))
+                self._position -= 1
             elif s.word == '{':
                 if not isinstance(var, ArrayDefinition):
                     raise Exception(f'Variable {var.variable.word} was not declared as an array')
@@ -139,7 +145,6 @@ class Parser:
                 result.append(BinaryOperationNode(Token('=', 'OPERATION'), result.pop().variable, Array(self._parse_array())))
             elif s.word == ';':
                 return result
-
             s = self._require(separators)
 
     def _parse_cin(self):
@@ -231,13 +236,17 @@ class Parser:
 
         if types:
             self._require(self._variable_types)
-        parameters.append(self._require(self._variables))
+        self._require(self._variables + (self._constants if not types else []))
+        self._position -= 1
+        parameters.append(self._parse_variable_or_constant())
 
         comma = self._match([','])
         while comma:
             if types:
                 self._require(self._variable_types)
-            parameters.append(self._require(self._variables))
+            self._require(self._variables + (self._constants if not types else []))
+            self._position -= 1
+            parameters.append(self._parse_variable_or_constant())
             comma = self._match([','])
 
         return parameters

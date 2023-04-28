@@ -40,6 +40,15 @@ class Parser:
         return self._tokens[self._position].word
 
     def _parse_variable_or_constant(self) -> Node:
+        cast_type = self._match(self._variable_types)
+        if cast_type:
+            self._require(['('])
+            expression = self._parse_formula()
+            self._require([')'])
+
+            cast_type.word = cast_type.word.upper()
+            return CastNode(cast_type, expression)
+
         constant = self._match(self._constants)
         if constant:
             return ConstantNode(constant)
@@ -136,7 +145,6 @@ class Parser:
                     raise Exception(f'Variable {var.variable.variable.word} was declared as an array')
 
                 result.append(BinaryOperationNode(Token('=', 'OPERATION'), var, self._parse_formula()))
-                self._position -= 1
             elif s.word == '{':
                 if not isinstance(var, ArrayDefinition):
                     raise Exception(f'Variable {var.variable.word} was not declared as an array')
@@ -236,17 +244,19 @@ class Parser:
 
         if types:
             self._require(self._variable_types)
-        self._require(self._variables + (self._constants if not types else []))
-        self._position -= 1
-        parameters.append(self._parse_variable_or_constant())
+            parameter = self._require(self._variables)
+        else:
+            parameter = self._parse_formula()
+        parameters.append(parameter)
 
         comma = self._match([','])
         while comma:
             if types:
                 self._require(self._variable_types)
-            self._require(self._variables + (self._constants if not types else []))
-            self._position -= 1
-            parameters.append(self._parse_variable_or_constant())
+                parameter = self._require(self._variables)
+            else:
+                parameter = self._parse_formula()
+            parameters.append(parameter)
             comma = self._match([','])
 
         return parameters

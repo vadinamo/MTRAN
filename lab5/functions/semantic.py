@@ -58,7 +58,7 @@ class Semantic:
             elif left[0] == 'STRING' and right[0] == 'STRING':
                 if operation in string_operators:
                     return left[0], left[1]
-                raise Exception('Only + available for STRING values')
+                raise Exception(f'Only {string_operators} available for STRING values')
             elif left[0] == 'BOOL' and right[0] == 'BOOL':
                 if operation == '||' or operation == '&&' or operation == '=':
                     return left[0], left[1]
@@ -129,5 +129,9 @@ class Semantic:
             return 'ARRAY', 'ARRAY'
         elif isinstance(root, ReturnNode):
             return
+        elif isinstance(root, CastNode):
+            self.analyze(root.expression)
+
+            return root.cast_type.word, 'VARIABLE'
 
         return root

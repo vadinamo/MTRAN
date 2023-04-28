@@ -2,6 +2,7 @@ from nodes.array import *
 from nodes.array_definition import *
 from nodes.binary_operation_node import *
 from nodes.case_node import *
+from nodes.cast_node import *
 from nodes.cin_node import *
 from nodes.constant_node import *
 from nodes.cout_node import *

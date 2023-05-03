@@ -150,7 +150,8 @@ class Parser:
                     raise Exception(f'Variable {var.variable.word} was not declared as an array')
 
                 self._position -= 1
-                result.append(BinaryOperationNode(Token('=', 'OPERATION'), result.pop().variable, Array(self._parse_array())))
+                result.append(
+                    BinaryOperationNode(Token('=', 'OPERATION'), result.pop().variable, Array(self._parse_array())))
             elif s.word == ';':
                 return result
             s = self._require(separators)
@@ -245,6 +246,8 @@ class Parser:
         if types:
             self._require(self._variable_types)
             parameter = self._require(self._variables)
+            while self._match(['[']):
+                self._require([']'])
         else:
             parameter = self._parse_formula()
         parameters.append(parameter)
@@ -254,6 +257,8 @@ class Parser:
             if types:
                 self._require(self._variable_types)
                 parameter = self._require(self._variables)
+                while self._match(['[']):
+                    self._require([']'])
             else:
                 parameter = self._parse_formula()
             parameters.append(parameter)
@@ -293,7 +298,6 @@ class Parser:
         self._require(['('])
         parameters = self._parse_function_parameters()
         self._require([')'])
-        self._require([';'])
 
         return FunctionCallNode(function_token, parameters)
 
@@ -380,7 +384,9 @@ class Parser:
 
         function_token = self._match(self._functions)
         if function_token:
-            return self._parse_function_call(function_token)
+            function_call_statement = self._parse_function_call(function_token)
+            self._require([';'])
+            return function_call_statement
 
         if self._match(self._variable_types):
             variable_token = self._match(self._variables)

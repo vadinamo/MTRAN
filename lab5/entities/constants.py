@@ -26,3 +26,13 @@ logical_operators = ['<', '>', '&&', '||', '==', '!=', '<=', '>=']
 calculation_operators = ['+', '-', '*', '/', '%', '=', '+=', '-=', '*=', '/=']
 
 execute_command = '\n\nmain()'
+
+
+def empty_array(shape):
+    if not shape:
+        return None
+
+    if len(shape) == 1:
+        return [0] * shape[0]
+
+    return [empty_array(shape[1:]) for _ in range(shape[0])]

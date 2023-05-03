@@ -3,7 +3,7 @@ from functions.parser import Parser
 from functions.semantic import Semantic
 from entities.print import PrintClass
 from nodes.nodes_module import *
-from entities.constants import execute_command, unary_operators, cast_var_types
+from entities.constants import execute_command, unary_operators, cast_var_types, empty_array
 
 
 class Translator:
@@ -173,6 +173,9 @@ class Translator:
         if not shape:
             return None
 
+        if not isinstance(shape, ConstantNode):
+            return 'empty_array([' + ', '.join(self._create_code(s) for s in shape) + '])'
+
         if len(shape) == 1:
             return [0] * int(shape[0].constant.word)
 
@@ -236,4 +239,5 @@ class Translator:
             return self._translate_cast(node)
 
     def execute(self):
+        locals()['empty_array'] = empty_array
         exec(self.code + execute_command, locals())

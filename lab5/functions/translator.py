@@ -20,6 +20,7 @@ class Translator:
 
         semantic = Semantic()
         semantic.analyze(tree)
+        self._switch = False
         self.code = self._create_code(tree)
         printer.print_code(self.code)
         printer._print_name('CODE EXECUTE')
@@ -36,8 +37,6 @@ class Translator:
         left = self._create_code(node.left_node)
         right = self._create_code(node.right_node)
 
-        if isinstance(node.left_node, BinaryOperationNode) and node.left_node.operation.word != '[':
-            left = '(' + left + ')'
         if isinstance(node.right_node, BinaryOperationNode) and node.right_node.operation.word != '[':
             right = '(' + right + ')'
 
@@ -54,6 +53,12 @@ class Translator:
     def _translate_key_word(self, node):
         if node.word.word == 'endl':
             return '"\\n"'
+        elif node.word.word == 'continue':
+            return 'continue'
+        elif node.word.word == 'break' and not self._switch:
+            return 'break'
+
+        return ''
 
     def _translate_cin(self, node):
         expression = f'{self._create_code(node.expression[0])}'
@@ -188,6 +193,47 @@ class Translator:
         else:
             return self._create_code(item)
 
+    def _translate_case(self, items: list, depth):
+        result = ''
+        for i in range(len(items)):
+            if isinstance(items[i], KeyWordNode) and (items[i].word.word == 'break' or items[i].word.word == 'default'):
+                return items[i + 1:], result
+            elif isinstance(items[i], CaseNode):
+                return items[i:], result
+
+            if isinstance(items[i], KeyWordNode):
+                print(items[i].word.word)
+            result += '\t' * depth + self._create_code(items[i], depth) + '\n'
+
+        return items, result
+
+    def _translate_switch(self, node, depth):
+        if isinstance(node.body, StatementsNode):
+            result = ''
+            variable = node.variable.word
+            body = node.body.nodes
+
+            self._switch = True
+            while len(body) > 0:
+                element = body.pop(0)
+                if isinstance(element, CaseNode):
+                    statement = self._create_code(element.variable)
+                    result += (('if') if result == '' else (
+                                depth * '\t' + 'elif')) + f' {variable} == {statement}:\n'
+                    buff = self._translate_case(body, depth + 1)
+                    body = buff[0]
+                    result += buff[1]
+                else:
+                    n = StatementsNode()
+                    n.nodes = body
+                    result += '\t' * depth + 'else:\n' + self._create_code(n, depth + 1)
+                    break
+
+            self._switch = False
+            return result
+        else:
+            raise 'Invalid Switch body'
+
     def _create_code(self, node, depth=0):
         if isinstance(node, Token):
             return node.word
@@ -226,9 +272,7 @@ class Translator:
         elif isinstance(node, FunctionCallNode):
             return self._translate_function_call(node)
         elif isinstance(node, SwitchNode):
-            pass
-        elif isinstance(node, CaseNode):
-            pass
+            return self._translate_switch(node, depth)
         elif isinstance(node, ArrayDefinition):
             return f'{node.variable.variable.word} = {self._empty_array(node.sizes)}'
         elif isinstance(node, Array):

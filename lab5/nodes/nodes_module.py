@@ -19,3 +19,5 @@ from nodes.unary_operation_node import *
 from nodes.variable_node import *
 from nodes.variable_type_node import *
 from nodes.while_node import *
+from nodes.class_node import *
+from nodes.class_object import *

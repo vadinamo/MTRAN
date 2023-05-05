@@ -13,6 +13,7 @@ class Parser:
         self._variable_types = lexer.var_types_tokens
         self._variables = list(lexer.var_tokens.keys())
         self._functions = list(lexer.func_tokens.keys())
+        self._classes = lexer.classes
 
         self._current_function_type = ''
 
@@ -368,6 +369,20 @@ class Parser:
                 return self._parse_while()
             elif key_word.word == 'return':
                 return self._parse_return()
+            elif key_word.word == 'class':
+                self._require(self._classes)
+                class_variable = self._require(self._classes)
+                self._require(['{'])
+                self._require(['public'])
+                self._require([':'])
+
+                objects = []
+                while not self._match(['}']):
+                    self._require(self._variable_types)
+                    objects.append(self._parse_variable_or_constant())
+                    self._require([';'])
+
+                return ClassNode(class_variable, objects)
 
         if self._match(self._variables):
             self._position -= 1  # current position is variable
@@ -382,10 +397,34 @@ class Parser:
                 self._require([';'])
                 return BinaryOperationNode(operation, var_node, right_formula_node)
 
+        class_token = self._match(self._classes)
+        if class_token:
+            var = self._parse_variable_or_constant()
+            if not self._match(['=']):
+                self._require(';')
+                return var
+            class_type = self._require(self._classes)
+
+            self._require(['('])
+            parameters = [self._parse_variable_or_constant()]
+            operation = self._require([',', ')'])
+            while True:
+                if operation.word == ')':
+                    break
+                else:
+                    parameters.append(self._parse_variable_or_constant())
+
+                operation = self._require([',', ')'])
+
+            self._require(';')
+
+            return BinaryOperationNode(Token('=', 'OPERATION'), var, ClassObject(class_type, parameters))
+
         function_token = self._match(self._functions)
         if function_token:
             function_call_statement = self._parse_function_call(function_token)
             self._require([';'])
+            self
             return function_call_statement
 
         if self._match(self._variable_types):

@@ -5,7 +5,7 @@ from entities.print import PrintClass
 from nodes.nodes_module import *
 from entities.constants import execute_command, unary_operators, cast_var_types, empty_array
 
-
+# class (car name, engine, year)  switch 1 sort (year) 2 sort(engine) switch 1 front 2 desc
 class Translator:
     def __init__(self, path):
         printer = PrintClass()
@@ -18,8 +18,8 @@ class Translator:
         tree = parser.parse_block()
         printer.print_tree(tree)
 
-        semantic = Semantic()
-        semantic.analyze(tree)
+        # semantic = Semantic()
+        # semantic.analyze(tree)
         self._switch = False
         self.code = self._create_code(tree)
         printer.print_code(self.code)
@@ -37,8 +37,6 @@ class Translator:
         left = self._create_code(node.left_node)
         right = self._create_code(node.right_node)
 
-        if isinstance(node.right_node, BinaryOperationNode) and node.right_node.operation.word != '[':
-            right = '(' + right + ')'
 
         operation = node.operation.word
         if operation == '&&':
@@ -47,7 +45,8 @@ class Translator:
             operation = 'or'
         elif operation == '[':
             return f'{left}[{right}]'
-
+        elif operation == '.':
+            return f'{left}.{right}'
         return f'{left} {operation} {right}'
 
     def _translate_key_word(self, node):
@@ -218,7 +217,7 @@ class Translator:
                 element = body.pop(0)
                 if isinstance(element, CaseNode):
                     statement = self._create_code(element.variable)
-                    result += (('if') if result == '' else (
+                    result += ('if' if result == '' else (
                                 depth * '\t' + 'elif')) + f' {variable} == {statement}:\n'
                     buff = self._translate_case(body, depth + 1)
                     body = buff[0]
@@ -281,6 +280,15 @@ class Translator:
             return self._translate_return(node)
         elif isinstance(node, CastNode):
             return self._translate_cast(node)
+        elif isinstance(node, ClassNode):
+            result = f'class {node.class_variable.word}:\n' \
+                     f'\tdef __init__(self, ' + ', '.join(n.variable.word for n in node.objects) + '):\n'
+
+            for n in node.objects:
+                result += f'\t\tself.{n.variable.word} = {n.variable.word}\n'
+            return result
+        elif isinstance(node, ClassObject):
+            return f'{node.class_variable.word}(' + ', '.join(self._create_code(p) for p in node.parameters) + ')'
 
     def execute(self):
         locals()['empty_array'] = empty_array

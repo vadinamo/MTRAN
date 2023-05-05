@@ -7,6 +7,7 @@ class Lexer:
     def __init__(self):
         self.var_tokens = {}
         self.func_tokens = {}
+        self.classes = []
         self.constants_tokens = {}
         self.var_types_tokens = []
         self.key_word_tokens = []
@@ -75,7 +76,7 @@ class Lexer:
                 current += s
 
             else:
-                if current in var_types:
+                if current in var_types or current in self.classes:
                     var_type = current
                     self.var_types_tokens.append(current)
                     self.tokens.append(Token(current, 'VARIABLE TYPE'))
@@ -120,14 +121,20 @@ class Lexer:
                     # else:
                     if current not in self.var_tokens.keys() and current not in self.func_tokens.keys():
                         if len(var_type) == 0:
-                            raise Exception(
-                                f'\n[{row}, {column}] LexicalError, unexpected "{current}":\n'
-                                f'[{row}]: {self.__get_line(code, row)}\n'
-                                f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                            if self.tokens[-1].word == 'class':
+                                self.classes.append(current)
+                                self.tokens.append(Token(current, 'CLASS TYPE'))
+                            else:
+                                raise Exception(
+                                    f'\n[{row}, {column}] LexicalError, unexpected "{current}":\n'
+                                    f'[{row}]: {self.__get_line(code, row)}\n'
+                                    f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                         self.var_tokens[current] = var_type
 
                     if current in self.var_tokens.keys():
                         self.tokens.append(Token(current, f'{self.var_tokens[current].upper()} VARIABLE'))
+                    elif current in self.classes:
+                        self.tokens.append(Token(current, f'{self.classes[current].upper()} CLASSES'))
                     elif current in self.func_tokens.keys():
                         self.tokens.append(Token(current, f'{self.func_tokens[current].upper()} FUNCTION'))
                     current = ''
@@ -157,9 +164,19 @@ class Lexer:
                         space = False
                     else:
                         if len(current.replace(" ", "").replace("\t", "").replace("\n", "")) > 0:
-                            raise Exception(f'\n[{row}, {column}] LexicalError, invalid variable name "{current}":\n'
-                                            f'[{row}]: {self.__get_line(code, row)}\n'
-                                            f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
+                            # if self.tokens[-1].word == '"' and current[-1] == '"':
+                            #     self.tokens[-1].word += current
+                            # else:
+                            if current[0] == '.':
+                                buff = self.tokens.pop()
+                                self.tokens.append(Token(current[0], 'OPERATION'))
+                                self.tokens.append(Token(current[1:], 'CLASS INSTANCE'))
+                                self.tokens.append(buff)
+                                current = ''
+                            else:
+                                raise Exception(f'\n[{row}, {column}] LexicalError, invalid variable name "{current}":\n'
+                                                f'[{row}]: {self.__get_line(code, row)}\n'
+                                                f'{" " * (len((row + 1).__str__()) + 1 + column)}^')
                         space = True
                 else:
                     current += s
